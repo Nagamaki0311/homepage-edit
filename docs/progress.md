@@ -47,6 +47,24 @@
 
 ---
 
+## 2026-08-04 T-010 続き: レビュー修正2ラウンド＋Manager発見バグの修正
+
+### 実施内容
+- Reviewer1回目レビューで必須修正2件（href/URLのXSS対策、theme.tokens.colorのCSS/CSSインジェクション対策）を指摘。`core/render/url.js`（新規、`resolveUrl()`）、`core/schema/validate.js`（`isSafeCssColor()`）、`core/theme/tokens-to-css.js`（`safeColor()`多重防御）で対応（コミット`513f1c2`）。
+- Reviewer再レビューで、`resolveUrl()`が制御文字（タブ/改行/CR）混入によるスキーム判定バイパスを防げていないことを指摘。`resolveUrl()`にスキーム判定前の制御文字除去ステップを追加（コミット`ecccf85`）。Reviewer最終レビューで承認。
+- Manager側で`node build/build.js --site teate1122`実行後、Playwrightでエディタを実機確認したところ、プレビューiframeが無スタイルで表示される別バグを発見。原因は`core/render/render-site.js`の`options.cssHref || "style.css"`が空文字列を偽値として扱い、`editor/ui/canvas.js`のCSSインライン化（`<link rel="stylesheet" href="">`を対象にした文字列置換）が一致しなくなっていたこと。`options.cssHref !== undefined ? options.cssHref : "style.css"`に修正（コミット`cc9b163`）。
+
+### 結果
+- `node build/build.js --site teate1122`成功、`dist/`に正しく生成されることを継続確認。
+- Manager側でPlaywright（Chromium, iPhone相当ビューポート）により、修正後のエディタを視覚確認: ヒーロー画像が正方形枠に正しく収まりテキストが正常なレイアウトで表示されること、セクションタップでプロパティパネル（見出し・本文・背景画像・ボタン文言の編集フィールド）が正しく開くこと、コンソールエラーがないことを確認。
+- Reviewerによるセキュリティレビュー2ラウンド（要修正→要修正→承認）を経て、必須修正はすべて解消。完了条件（要件達成・エラーなし・動作確認済み・コードレビュー済み）を満たしたためT-010を完了とした。
+
+### 次回開始位置
+- T-011（P1想定）: 並び替え・Undo/Redo・テーマプリセット・PWAオフライン・WebP最適化、teate1122インポートスクリプトから着手する。
+- 積み残し（P0からの継続）: editorが`validate.js`を保存前に呼んでいない点はP1で対応を検討。
+
+---
+
 ## 2026-08-03 T-007: Agent別モデル最適化（Model Routing）の導入
 
 ### 実施内容
