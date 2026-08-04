@@ -178,7 +178,7 @@ export async function exportSiteAsZip(state, assetBase = "") {
 
   for (const pageId of site.pages) {
     const page = state.pages[pageId];
-    const { html, css } = renderSite(site, page, { assetBase: "assets/", cssHref: "style.css" });
+    const { html, css } = renderSite(site, page, { assetBase: "assets/", cssHref: "style.css", pages: state.pages });
     const filename = page.slug === "/" ? "index.html" : `${page.slug.replace(/^\/+|\/+$/g, "")}.html`;
     files.push({ name: filename, data: html });
     files.push({ name: "style.css", data: css });

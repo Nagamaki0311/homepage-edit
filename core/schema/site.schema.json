@@ -20,7 +20,8 @@
               "properties": {
                 "title": { "type": "string" },
                 "description": { "type": "string" },
-                "ogImage": { "type": "string" }
+                "ogImage": { "type": "string" },
+                "favicon": { "type": "string", "description": "アセットID、または/で始まる固定パス。省略時は/favicon.svgを既定値とする。" }
               }
             }
           }

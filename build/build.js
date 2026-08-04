@@ -55,7 +55,7 @@ function main() {
   if (existsSync(distDir)) rmSync(distDir, { recursive: true });
   mkdirSync(distDir, { recursive: true });
 
-  let cssWritten = false;
+  const pages = {};
   for (const pageId of site.pages) {
     const pagePath = join(siteDir, "pages", `${pageId}.json`);
     if (!existsSync(pagePath)) {
@@ -69,8 +69,13 @@ function main() {
       pageValidation.errors.forEach((e) => console.error(`  - ${e}`));
       process.exit(1);
     }
+    pages[pageId] = page;
+  }
 
-    const { html, css } = renderSite(site, page, { assetBase: "assets/", cssHref: "style.css" });
+  let cssWritten = false;
+  for (const pageId of site.pages) {
+    const page = pages[pageId];
+    const { html, css } = renderSite(site, page, { assetBase: "assets/", cssHref: "style.css", pages });
     const outFile = join(distDir, slugToFilename(page.slug));
     mkdirSync(dirname(outFile), { recursive: true });
     writeFileSync(outFile, html, "utf-8");

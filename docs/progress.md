@@ -19,6 +19,24 @@
 
 ---
 
+## 2026-08-04 T-016: core/renderのパリティ修正（ヘッダー/ナビ・フッター・OGP/favicon・Netlify Forms・Webフォント）
+
+### 実施内容
+- `core/render/render-site.js`にグローバルヘッダー（サイト名リンク＋`site.nav.items`から生成するナビゲーション、現在ページに`aria-current="page"`）とフッター（`site.social`のSNSリンク＋コピーライト）を追加。`renderSite`に新オプション`options.pages`（pageId→pages/*.jsonのマップ）を追加し、他ページのslugをナビゲーション解決に使用。呼び出し元3箇所（`build/build.js`・`editor/ui/canvas.js`・`editor/media/zip.js`）を更新し、既にstore/build側で保持している全ページのマップを渡すよう修正。
+- `<head>`にOGP（`og:type`/`og:title`/`og:description`/`og:image`）とfavicon（`<link rel="icon">`）を追加。`og:image`は`site.site.meta.ogImage`がアセットIDの場合`core/render/assets.js`の`resolveAssetUrl`で解決。faviconは新設した任意フィールド`site.site.meta.favicon`（`core/schema/site.schema.json`に追加）を使い、未設定時は固定値`/favicon.svg`にフォールバック。
+- `core/sections/contact-social/render.js`に`site.json`の`contact.formProvider === "netlify"`の場合のみ出力するNetlify Forms用フォーム（hidden `form-name`・honeypot・name/email/message・送信ボタン）を追加。表示可否を新規プロパティ`showForm`（既定true）で制御できるようにし`define.js`にフィールド追加。フォーム内は固定リテラルのみでユーザー入力を含まないため`esc()`は不要（見出し・本文など既存の可変値は引き続き`esc()`/`resolveUrl()`を通す）。
+- Webフォント読み込みはGoogle Fonts CDN経由の`<link>`をオプション実装。`theme.tokens.font.heading`/`body`が既知のfont id（`zen-old-mincho`/`noto-sans-jp`）に一致する場合のみ`<link rel="preconnect">`+スタイルシートを出力し、未知のidでは何も出力しない（フォールバックのシステムフォントスタックは`tokens-to-css.js`に既存）。CDN依存の理由をコード内コメントに明記。
+- ヘッダー/フッターのCSSは`core/render/render-site.js`内に`CHROME_CSS`として定義し`renderThemeCss()`で結合（セクション横断の共通chromeのため、個別セクションのCSSファイルとは別扱い）。
+
+### 結果
+- `node build/build.js --site teate1122`で5ページとも正常生成。`grep`で`dist/*.html`に`site-header`/`site-footer`/`aria-current="page"`/`og:image`/`rel="icon"`/`fonts.googleapis.com`/`data-netlify="true"`が期待通り含まれることを確認。
+- Playwrightでエディタのプレビューiframeを確認。ヘッダー（サイト名+ナビ）、Netlify Formsフォーム、フッター（SNSリンク+コピーライト`© 2026 teate1122`）がプレビューに反映されることを視覚確認。
+
+### 次回開始位置
+- Reviewerによるレビュー（T-016）。承認後、T-017（teate1122のAstro→ビルド不要の静的サイトへの移行）に着手。
+
+---
+
 ## 2026-08-04 T-012 続き: レビュー修正（ZIPエクスポート例外の解消）
 
 ### 実施内容
