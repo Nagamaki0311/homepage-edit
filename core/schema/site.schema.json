@@ -126,7 +126,20 @@
               "file": { "type": "string" },
               "w": { "type": "number" },
               "h": { "type": "number" },
-              "alt": { "type": "string" }
+              "alt": { "type": "string" },
+              "srcset": {
+                "type": "array",
+                "description": "WebP等の複数解像度バリアント（省略可）。",
+                "items": {
+                  "type": "object",
+                  "required": ["width", "file"],
+                  "properties": {
+                    "width": { "type": "number" },
+                    "height": { "type": "number" },
+                    "file": { "type": "string" }
+                  }
+                }
+              }
             }
           }
         }

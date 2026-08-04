@@ -25,7 +25,7 @@
 | T-010 | ビジュアルサイトビルダー P0（MVP）: スキーマ・core/render・基本セクション種別・基本編集・自動保存・プレビュー・ZIPエクスポート・Node CLI | 高 | 完了 | developer/reviewer | セキュリティ2件（href/URLのXSS対策、theme色のCSSインジェクション対策）Reviewer承認済み。cssHref空文字列バグも修正済み。Manager側でPlaywrightによりプレビュー正常表示・セクション選択・プロパティパネル表示を視覚確認済み |
 | T-011 | ビジュアルサイトビルダー P1-a: teate1122インポートスクリプト（Astroソース→サイトビルダーJSON変換） | 高 | 完了 | developer/reviewer | tools/import-teate1122.jsを新規実装。Reviewer承認済み（軽微指摘のイベント開催予定/過去の分類・ソートも追加修正済み）。Manager側で5ページ全てのビルド・バリデーション・実データ反映を確認済み |
 
-| T-012 | ビジュアルサイトビルダー P1-b: 並び替え（構成シート）・Undo/Redo・テーマプリセット切替UI・PWAオフライン・WebP最適化 | 高 | 実装中 | developer | User要望により完成リンク公開まで継続。D-009参照 |
+| T-012 | ビジュアルサイトビルダー P1-b: 並び替え（構成シート）・Undo/Redo・テーマプリセット切替UI・PWAオフライン・WebP最適化 | 高 | レビュー中 | reviewer | Developer実装完了、Playwrightで全機能の動作確認済み。既知の積み残しはprogress.md参照。D-009参照 |
 
 ## バックログ（未着手・優先度未確定）
 - T-013 (P2想定): GitHub API直接公開（PAT認証・差分確認画面）・複数ページ・ギャラリー・アニメーション・ダークモード

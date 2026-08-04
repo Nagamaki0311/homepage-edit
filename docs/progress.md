@@ -19,6 +19,34 @@
 
 ---
 
+## 2026-08-04 T-012: ビジュアルサイトビルダー P1-b実装（並び替え・Undo/Redo・テーマプリセット・PWAオフライン・WebP最適化）
+
+### 実施内容
+- **並び替え（構成シート）**: `editor/ui/sheets/structure-sheet.js`を新規実装。セクション名の縦リストUIで、上下ボタン（確実な代替手段）とPointer Eventsによる短距離ドラッグ並び替えの両方に対応（SortableJs等の外部ライブラリは使わず自前実装）。表示/非表示切替・複製・削除も統合。`editor/index.html`に「構成」タブを追加。
+- **Undo/Redo**: `editor/app/history.js`を新規実装。JSON Patch風の`{op,path,value}`の逆パッチ対をスタックに積む方式。`store.setPath`/`store.setState`のメソッド自体を差し替えて変更を横取りする実装とした。テキスト入力等の連続変更は500msでコアレス（同一pathへの連続`setPath`のみ）。ヘッダーに「戻す」「やり直す」ボタンを追加。
+  - 実装中に、state変更の通知（`store`のlisteners）がundo/redoスタックへのpush前に発火し、ボタン活性状態の更新が1テンポ遅れるバグを発見。undo側の値を確定させてから`originalSetState`/`originalSetPath`を呼ぶ順序に修正して解消。
+- **テーマプリセット**: `core/theme/presets/`に`warm-sunset.json`（温かな夕焼け）・`cool-mono.json`（クールモノトーン）を追加（既存`quiet-mincho.json`と合わせて3種）。`editor/ui/panels/theme-panel.js`に「プリセットから選ぶ」ボタン一覧を追加し、タップで`site.theme`全体を一括置換できるようにした。
+- **PWAオフライン**: `editor/sw.js`をcache-first戦略に全面書き換え。`editor/`・`core/`・`sites/teate1122/`配下の静的ファイルを`CACHE_VERSION`付きキャッシュ名（`homepage-edit-v1`）でプリキャッシュし、`activate`時に旧バージョンのキャッシュを削除する。
+- **WebP最適化**: `editor/media/resize-webp.js`を新規実装。`createImageBitmap`+`canvas.toBlob('image/webp')`で480/960/1440px幅のWebPを生成し、`editor/media/import.js`のアップロードフローに統合（`site.assets[].srcset`として保存、`core/schema/site.schema.json`を軽微に拡張）。`core/render/assets.js`に`resolveSrcset`を追加し、`hero`/`image-text`のrender.jsで`srcset`属性を出力。Lazy Load対応として`image-text`の画像に`loading="lazy"`を追加（ヒーロー画像はファーストビュー想定のため付与しない）。`editor/media/zip.js`もsrcsetのdata URLをZIP内ファイルへ変換するよう拡張。
+- 一箇所、`main.js`の`store.subscribe`コールバックが「セクション」「構成」タブしか再描画しておらず、テーマプリセット適用後に色パネルの表示が更新されない不具合をPlaywright確認中に発見・修正（全タブ共通で`renderActivePanel(store)`を呼ぶよう統一）。
+
+### 結果
+- `node build/build.js --site teate1122`は変更後も正常終了（5ページ+style.css+assets生成）。
+- Playwrightでエディタを実操作し、以下を視覚確認済み（スクリーンショット取得済み）:
+  - 構成シートでの上下ボタン並び替え・Pointer Events短距離ドラッグ並び替え・表示切替・複製・削除
+  - Undo/Redo（並び替え・表示切替・複製・プリセット変更いずれも正しく戻る/やり直せる）
+  - テーマプリセット切替（色が即座に反映され、選択中プリセットのハイライトも同期）
+  - Service Worker登録・キャッシュ内49ファイル格納・オフライン（`context.setOffline(true)`）でのリロード後もアプリシェルとIndexedDB保存済みデータで編集画面が表示されることを確認
+  - 画像アップロード時にWebP srcset（480/960/1440px相当、生成した幅は元画像サイズに応じて調整）が生成され、プレビューiframe内`<img>`の`srcset`属性に反映されることを確認
+  - ZIPエクスポートがsrcset付きアセットを含めて正常に生成されることを確認（`exportSiteAsZip`を直接呼び出しての検証）
+
+### 次回開始位置
+- 既知の積み残し（P1-bのスコープ外、既存のP0/P1-a由来のギャップ）: `editor/app/main.js`の`loadInitialState`が`home`ページのみを読み込む一方、`site.json`の`pages`配列は5ページ列挙されているため、エディタのZIPエクスポートボタンをそのまま押すと`state.pages[pageId]`が`undefined`になり例外が発生する（複数ページ編集UI自体が未実装のため）。複数ページ切替UIはP1-b承認スコープに含まれておらず、P2/P3のバックログ（複数ページ管理）で対応する想定。
+- T-011の積み残し（お問い合わせフォームセクション種別、ギャラリー画像、プライバシーポリシー内リンク）も引き続き未着手。
+- 次はレビュー依頼（Reviewer）へ。
+
+---
+
 ## 2026-08-04 T-011: teate1122インポートスクリプトの実装
 
 ### 実施内容

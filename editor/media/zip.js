@@ -158,6 +158,22 @@ export async function exportSiteAsZip(state, assetBase = "") {
       const buf = new Uint8Array(await res.arrayBuffer());
       files.push({ name: `assets/${asset.file}`, data: buf });
     }
+
+    if (Array.isArray(asset.srcset)) {
+      for (let j = 0; j < asset.srcset.length; j++) {
+        const entry = asset.srcset[j];
+        if (typeof entry.file === "string" && entry.file.startsWith("data:")) {
+          const ext = extFromMime(entry.file);
+          const filename = `${asset.id || `asset-${i}`}-${entry.width}w.${ext}`;
+          files.push({ name: `assets/${filename}`, data: dataUrlToBytes(entry.file) });
+          entry.file = filename;
+        } else if (typeof entry.file === "string") {
+          const res = await fetch(`${assetBase}${entry.file}`);
+          const buf = new Uint8Array(await res.arrayBuffer());
+          files.push({ name: `assets/${entry.file}`, data: buf });
+        }
+      }
+    }
   }
 
   for (const pageId of site.pages) {

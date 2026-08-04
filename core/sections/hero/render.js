@@ -2,13 +2,14 @@
 // 依存ゼロ・ブラウザ/Node共有。DOM/Node APIは使用しない。
 
 import { html, esc } from "../../render/html.js";
-import { resolveAssetUrl, findAsset } from "../../render/assets.js";
+import { resolveAssetUrl, resolveSrcset, findAsset } from "../../render/assets.js";
 import { resolveUrl } from "../../render/url.js";
 
 export function render(props, ctx) {
   const { heading = "", body = "", image, cta } = props || {};
   const asset = image?.assetId ? findAsset(ctx.site, image.assetId) : null;
   const src = asset ? resolveAssetUrl(ctx.site, image.assetId, ctx.assetBase) : null;
+  const srcset = asset ? resolveSrcset(ctx.site, image.assetId, ctx.assetBase) : null;
   const focalX = ((image?.focal?.[0] ?? 0.5) * 100).toFixed(1);
   const focalY = ((image?.focal?.[1] ?? 0.5) * 100).toFixed(1);
   const zoom = image?.zoom ?? 1;
@@ -17,7 +18,7 @@ export function render(props, ctx) {
     ${
       src
         ? html`<div class="hero__media" style="--focal-x:${esc(focalX)}%;--focal-y:${esc(focalY)}%;--zoom:${esc(zoom)}">
-      <img class="hero__img" src="${esc(src)}" alt="${esc(image.alt || asset?.alt || "")}">
+      <img class="hero__img" src="${esc(src)}"${srcset ? html` srcset="${esc(srcset)}" sizes="(min-width: 768px) 50vw, 100vw"` : ""} alt="${esc(image.alt || asset?.alt || "")}">
     </div>`
         : ""
     }

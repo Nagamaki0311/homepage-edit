@@ -2,12 +2,13 @@
 // 依存ゼロ・ブラウザ/Node共有。
 
 import { html, esc } from "../../render/html.js";
-import { resolveAssetUrl, findAsset } from "../../render/assets.js";
+import { resolveAssetUrl, resolveSrcset, findAsset } from "../../render/assets.js";
 
 export function render(props, ctx) {
   const { heading = "", body = "", image, imagePosition = "left" } = props || {};
   const asset = image?.assetId ? findAsset(ctx.site, image.assetId) : null;
   const src = asset ? resolveAssetUrl(ctx.site, image.assetId, ctx.assetBase) : null;
+  const srcset = asset ? resolveSrcset(ctx.site, image.assetId, ctx.assetBase) : null;
   const focalX = ((image?.focal?.[0] ?? 0.5) * 100).toFixed(1);
   const focalY = ((image?.focal?.[1] ?? 0.5) * 100).toFixed(1);
   const zoom = image?.zoom ?? 1;
@@ -16,7 +17,7 @@ export function render(props, ctx) {
     <div class="image-text__media">
       ${
         src
-          ? html`<img class="image-text__img" style="--focal-x:${esc(focalX)}%;--focal-y:${esc(focalY)}%;--zoom:${esc(zoom)}" src="${esc(src)}" alt="${esc(image.alt || asset?.alt || "")}">`
+          ? html`<img class="image-text__img" style="--focal-x:${esc(focalX)}%;--focal-y:${esc(focalY)}%;--zoom:${esc(zoom)}" src="${esc(src)}"${srcset ? html` srcset="${esc(srcset)}" sizes="(min-width: 768px) 50vw, 100vw"` : ""} alt="${esc(image.alt || asset?.alt || "")}" loading="lazy">`
           : ""
       }
     </div>

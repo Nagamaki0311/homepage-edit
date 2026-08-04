@@ -2,10 +2,12 @@
 // エディタのエントリポイント。store/autosave/canvas/panelsを配線する。
 
 import { createStore } from "./store.js";
+import { attachHistory } from "./history.js";
 import { attachAutosave, loadSite } from "./autosave.js";
 import { mountCanvas, highlightSection } from "../ui/canvas.js";
 import { renderPropsPanel } from "../ui/panels/props-panel.js";
 import { renderThemePanel } from "../ui/panels/theme-panel.js";
+import { renderStructureSheet } from "../ui/sheets/structure-sheet.js";
 import { exportSiteAsZip } from "../media/zip.js";
 
 const SITE_ID = "teate1122";
@@ -15,6 +17,8 @@ const statusEl = document.getElementById("status");
 const panelEl = document.getElementById("panel");
 const iframeEl = document.getElementById("preview");
 const exportBtn = document.getElementById("export-zip-btn");
+const undoBtn = document.getElementById("undo-btn");
+const redoBtn = document.getElementById("redo-btn");
 const tabButtons = document.querySelectorAll(".app__tabs button");
 
 let activeTab = "sections";
@@ -71,6 +75,14 @@ function renderSectionsTab(store) {
 function renderActivePanel(store) {
   if (activeTab === "sections") {
     renderSectionsTab(store);
+  } else if (activeTab === "structure") {
+    renderStructureSheet(panelEl, store, {
+      onSelect: (sectionId) => {
+        activeTab = "sections";
+        tabButtons.forEach((b) => b.classList.toggle("is-active", b.dataset.tab === "sections"));
+        selectSection(store, sectionId);
+      },
+    });
   } else {
     renderThemePanel(panelEl, store);
   }
@@ -86,11 +98,27 @@ async function main() {
   statusEl.textContent = "読み込み中...";
   const initialState = await loadInitialState();
   const store = createStore(initialState);
+  const history = attachHistory(store);
+
+  function updateHistoryButtons() {
+    undoBtn.disabled = !history.canUndo();
+    redoBtn.disabled = !history.canRedo();
+  }
+
+  undoBtn.addEventListener("click", () => {
+    history.undo();
+    updateHistoryButtons();
+  });
+  redoBtn.addEventListener("click", () => {
+    history.redo();
+    updateHistoryButtons();
+  });
 
   attachAutosave(store, SITE_ID);
   store.subscribe(() => {
     statusEl.textContent = "自動保存済み";
-    if (activeTab === "sections") renderSectionsTab(store);
+    updateHistoryButtons();
+    renderActivePanel(store);
   });
 
   mountCanvas(iframeEl, store, {
