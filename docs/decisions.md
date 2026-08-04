@@ -282,3 +282,33 @@
 ### 影響
 - 今後の実装（Developer）は、まずP0のスコープ（`core/schema`, `core/render`, `core/sections`の基本セット, `editor/`の最小構成）から着手する。
 - 全要件を一度に実装しないため、docs/tasks.mdでは各フェーズを個別タスクとして管理する。
+
+---
+
+## D-010: 「更新」ボタンによるGitHub直接公開機能（teate1122のビルド方式移行を含む）を承認する
+
+- 日付: 2026-08-04
+- 状態: 採用
+
+### 背景
+- P0〜P1-bで「ZIPで書き出し→手作業でGitHubに反映」という運用だったが、Userはこれをアプリの目指す設計と異なると判断し、「更新」ボタン1回で公開まで完了する機能を要望した。
+- 調査の結果、teate1122リポジトリは現状Astro 5でビルドされ（`netlify.toml`の`command = "npm run build"`）、ビジュアルサイトビルダーの独自レンダラー（`core/render`）とはビルドパイプラインが別物であるという根本的な設計上の衝突が判明した。単純にビルダーの生成物をpushしても、Netlify側のAstroビルドが上書きしてしまう。
+- また、現状の`core/render`はteate1122の実際の公開サイトと機能的に見劣りする状態（グローバルヘッダー/ナビ・フッター、OGP/favicon、Netlify Forms対応、Webフォント読み込みが未実装）であることも判明した。
+
+### 決定
+- **teate1122リポジトリの移行**: Astroビルドを廃止し、「ビルド不要の生成済み静的サイト＋JSONソース」構成へ移行する。`netlify.toml`から`command`（Astroビルド）を削除し、Netlify側はビルドを一切行わない構成にする。ソース・オブ・トゥルースはJSON（`site-data/site.json`・`pages/*.json`）とし、生成されたHTML/CSSは常に生成物としてコミットされる（D-009の「JSON→HTML/CSS生成、HTML直接編集はしない」という制約を維持）。
+- **既存Astroソースの扱い**: 削除せず`legacy-astro/`ディレクトリへ退避する（User承認）。
+- **レンダラーのパリティ修正を前提作業とする**: 本番切替前に、`core/render`にグローバルヘッダー/ナビ・フッター・OGP/favicon・Netlify Forms対応・Webフォント読み込みを実装し、既存の公開サイトと見た目・機能が見劣りしない状態にする（User承認）。
+- **段階的移行**: `builder-preview`ブランチ＋Netlifyブランチデプロイで先に実物を確認し、パリティ確認後に`main`ブランチへ切り替える。
+- **公開フロー**: GitHub Git Data API（blob/tree/commit/ref）を使い、変更ファイル一式を単一コミットにまとめて`teate1122`リポジトリへpushする。コミット前に変更ページ一覧の確認シートを表示する。
+- **GitHub認証**: fine-grained PAT（対象リポジトリ限定・Contents読み書きのみ）をIndexedDBに保存する。保存前に同意画面を表示し、末尾4文字のみ画面表示、削除ボタンを常設する。「保存しない（毎回入力）」オプションも用意する。
+- **エラーハンドリング**: 401/403は再入力導線、409/422（非fast-forward）は自動上書きせずユーザーに選択させる、ネットワークエラーは指数バックオフで最大3回自動リトライする。
+- **実装スコープ（v1）**: `editor/media/zip.js`のファイル組み立て処理を`editor/publish/build-files.js`として抽出・共有、`editor/publish/github.js`（Git Data APIクライアント）、`editor/publish/token-store.js`（PAT保存・同意UI）、「更新」ボタン・確認シート・進捗表示、プレビューiframeへの`sandbox="allow-same-origin"`追加（多層防御）。差分ファイルのみアップロード・公開履歴・ロールバック等はv2以降に先送りする。
+
+### 理由
+- 詳細な比較検討（案A/B/C）はPlannerの提案（docs/progress.md参照）を参照。GitHub Data APIでの単一コミットは原子性を保証でき、Netlifyのビルドなし構成はパイプライン衝突を構造的に解消する。
+- GitHub App/OAuthは静的PWAというアーキテクチャ（D-009）を崩すバックエンドを要するため不採用。fine-grained PAT＋同意UIで現実的なリスク低減を図る。
+
+### 影響
+- teate1122リポジトリの公開方式が根本的に変わる（Astroビルド→ビルド不要の静的配信）。同リポジトリのCLAUDE.md/docs運用は今回のスコープでは変更しないが、今後整理が必要になる可能性がある（Planner報告の未決事項3）。
+- 画像アセットのサイズ（data URL肥大化）に対する上限警告は今回未実装、将来的な検討事項とする（Planner報告の未決事項4）。

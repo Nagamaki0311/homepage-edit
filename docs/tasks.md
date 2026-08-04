@@ -27,10 +27,15 @@
 
 | T-012 | ビジュアルサイトビルダー P1-b: 並び替え（構成シート）・Undo/Redo・テーマプリセット切替UI・PWAオフライン・WebP最適化 | 高 | 完了 | developer/reviewer | 必須修正（ZIPエクスポート例外）対応済み、Reviewer承認。Manager側でビルド確認済み |
 | T-015 | Netlify公開設定の追加・本番デプロイ確認 | 高 | 完了 | claude | netlify.toml追加（publish=リポジトリルート、/を/editor/へリダイレクト）。本番URL https://edit-teate.netlify.app/editor/ で構造確認済み（リダイレクト・core/sitesへの相対パス解決・PWAファイル、いずれも200） |
+| T-016 | core/renderのパリティ修正（ヘッダー/ナビ・フッター・OGP/favicon・Netlify Forms対応・Webフォント読み込み） | 高 | 未着手 | developer | 「更新」ボタン公開機能の前提作業。D-010参照。本番切替前に既存teate1122公開サイトと機能・見た目が見劣りしない状態にする |
+| T-017 | teate1122リポジトリのビルド方式移行（Astro→ビルド不要の静的サイト、legacy-astro/退避、builder-previewブランチでの確認） | 高 | 未着手 | developer | D-010参照。T-016完了後に着手 |
+| T-018 | 「更新」ボタンによるGitHub直接公開機能（Git Data API・PAT管理・確認シート・進捗表示） | 高 | 未着手 | developer | D-010参照。T-017完了後に着手 |
 
 ## バックログ（未着手・優先度未確定）
-- T-013 (P2想定): GitHub API直接公開（PAT認証・差分確認画面）・複数ページ管理UI（ページ切替導線）・ギャラリー・アニメーション・ダークモード
+- T-013 (P2想定・一部T-018へ吸収): 複数ページ管理UI（ページ切替導線）・ギャラリー・アニメーション・ダークモード
 - T-014 (P3想定): 複数サイト管理UI・テンプレート7種・SEO/OGP詳細
+- T-018のv2候補: 差分ファイルのみアップロード・Netlify Deploy APIでの公開完了確認・差分プレビュー・公開履歴とロールバック（D-010参照）
+- 画像アセット（data URL）のコミット肥大化に対する上限警告は未実装（D-010参照、優先度未確定）
 - editor/media/zip.jsが全ページ書き出し時にstyle.css/assetsを重複してZIPに書き込む（T-012レビューで発見、非ブロッキング。優先度低）
 - progress.mdが将来肥大化した場合、docs/progress-archive.md等への分割を検討する（D-006時点では未実施・優先度未確定）
 
