@@ -21,11 +21,14 @@
 | T-005 | SessionStart/PreCompact Hookの導入 | 中 | 完了 | claude | .claude/settings.jsonを新設。tasks.md/progress.mdの自動表示と圧縮前リマインダーを1行shellコマンドで実装（D-005参照） |
 | T-006 | AI開発OS全体レビュー（重複排除・Hook環境検証） | 高 | 完了 | claude | CLAUDE.mdのAgent説明重複を除去、Manager-Hook接続を明文化、Hook環境依存性を文書化（D-006参照） |
 | T-007 | Agent別モデル最適化（Model Routing）の導入 | 中 | 完了 | claude | Planner=opus/Developer・Reviewer=sonnetに固定。軽量レビューはAgent呼び出し時のmodelパラメータ上書きで対応（D-007参照） |
-| T-008 | ビジュアルサイトビルダー（ノーコードWebサイトビルダー）の設計・実装 | 高 | 計画中 | planner | スマホファーストのWYSIWYGサイトビルダー。JSON→HTML/CSS生成方式、teate1122向けだが将来複数サイト管理を見据えた設計。フレームワーク非依存・PWA対応 |
+| T-008 | ビジュアルサイトビルダー: 設計フェーズ（アーキテクチャ・データ構造・ディレクトリ・UI/UX・技術選定・段階的スコープ） | 高 | 完了 | planner | Planner提案をUser承認（D-009参照）。以降はP0〜P3のフェーズ別タスク（T-010以降）で実装管理する |
+| T-010 | ビジュアルサイトビルダー P0（MVP）: スキーマ・core/render・基本セクション種別・基本編集・自動保存・プレビュー・ZIPエクスポート・Node CLI | 高 | 未着手 | developer | D-009参照。フレームワーク非依存・自前実装中心。teate1122の実際のページ構成に対応できるセクション種別を含める |
 
 ## バックログ（未着手・優先度未確定）
 
-- （ここに新しいタスク候補を追記する）
+- T-011 (P1想定): 並び替え・Undo/Redo・テーマプリセット・PWAオフライン・WebP最適化、teate1122インポートスクリプト（D-009によりP3から前倒し）
+- T-012 (P2想定): GitHub API直接公開（PAT認証・差分確認画面）・複数ページ・ギャラリー・アニメーション・ダークモード
+- T-013 (P3想定): 複数サイト管理UI・テンプレート7種・SEO/OGP詳細
 - progress.mdが将来肥大化した場合、docs/progress-archive.md等への分割を検討する（D-006時点では未実施・優先度未確定）
 
 ## メモ
