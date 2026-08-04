@@ -19,6 +19,25 @@
 
 ---
 
+## 2026-08-04 T-017: teate1122ビルド方式移行・OGP絶対URL化
+
+### 実施内容
+- homepage-edit側: `core/schema/site.schema.json`に`site.site.baseUrl`（任意）を追加、`core/render/render-site.js`で`baseUrl`設定時に`og:image`・`og:url`を絶対URL化（未設定時は従来通り相対パス、後方互換維持）。`tools/import-teate1122.js`を修正し`astro.config.mjs`の`site:`フィールドから`baseUrl`を自動設定。
+- Reviewerが「`resolveAssetUrl()`が返す`data:`URIがbaseUrl付与で壊れる」問題を指摘、`toAbsoluteUrl()`の絶対URL判定を`/^(https?:|data:)/i`に拡張して解消（コミット`0a4d04f`）。
+- teate1122側: `builder-preview`ブランチ（`main`は無変更）で、Astroソース一式（`src/`, `astro.config.mjs`, `package.json`等）を`legacy-astro/`へ`git mv`退避。ビルダー生成の静的サイト（5ページHTML・`style.css`・`assets/`）をルート直下に配置し、`site-data/`にJSONソースも配置。`netlify.toml`の`command`（Astroビルド）を削除し`publish = "."`に変更（既存3件のリダイレクトは維持）。favicon.svgをルートに配置。
+
+### 結果
+- `node build/build.js --site teate1122`で`dist/*.html`の`og:image`・`og:url`が`https://teate1122.netlify.app/...`の絶対URLで出力されることを確認。
+- Manager側でteate1122の`builder-preview`ブランチをローカルサーバーで配信し、5ページ全て200、ヘッダー/ナビ・フッター・お問い合わせフォーム・OGP絶対URLタグ・favicon・リダイレクト設定を確認済み。コンソールエラーなし。
+- 完了条件を満たしたためT-017を完了とした。`main`ブランチは無変更のまま。
+
+### 次回開始位置
+- `builder-preview`ブランチをGitHubへpushし、Netlifyのブランチデプロイ機能で実際のURLでの表示確認を行う（User確認が必要）。
+- パリティ確認後、`main`への切り替えを検討する（User承認が必要）。
+- 次はT-018（「更新」ボタンによるGitHub直接公開機能）に着手する。
+
+---
+
 ## 2026-08-04 T-016: core/renderのパリティ修正（ヘッダー/ナビ・フッター・OGP/favicon・Netlify Forms・Webフォント）
 
 ### 実施内容
