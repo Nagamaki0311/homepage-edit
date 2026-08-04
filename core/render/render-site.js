@@ -34,7 +34,7 @@ export function renderSite(site, page, options = {}) {
   const title = esc(page?.title ? `${page.title} | ${site?.site?.name || ""}` : site?.site?.name || "");
   const description = esc(site?.site?.meta?.description || "");
   const locale = esc(site?.site?.locale || "ja");
-  const cssHref = options.cssHref || "style.css";
+  const cssHref = options.cssHref !== undefined ? options.cssHref : "style.css";
 
   const fullHtml = `<!doctype html>
 <html lang="${locale}">
