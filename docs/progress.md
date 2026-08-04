@@ -19,6 +19,25 @@
 
 ---
 
+## 2026-08-04 T-011: teate1122インポートスクリプトの実装
+
+### 実施内容
+- `/home/user/teate1122`の実コンテンツ（`src/pages/*.astro`, `src/data/social.ts`, `src/content/events/*.md`, `src/styles/global.css`）を読み取り、ビルダーのスキーマに変換する`tools/import-teate1122.js`を新規実装（teate1122専用の1回限りのスクリプトとし、汎用Astroパーサー化はしない方針。Ponytail/YAGNI）。
+- `sites/teate1122/`のダミーデータを実データに置き換え。`site.json`にteate1122の実テーマ色・SNS・5ページ構成を反映し、`pages/home.json`に加えて`about.json`・`activities.json`・`contact.json`・`privacy.json`を新規生成。
+- `build/build.js`は既に`site.pages`をループする複数ページ出力に対応済みだったため変更不要と確認。
+- Reviewerが1回目レビューで承認（必須修正なし）。軽微な推奨指摘（イベントの開催予定/過去の区別・日付ソートが失われている）を受け、`buildActivitiesPage`に`activities.astro`と同じ分類・ソートロジックを追加し、activity-cardsセクションを開催予定/過去で分割する形に修正（コミット`c1d8f43`）。
+
+### 結果
+- `node tools/import-teate1122.js --src /home/user/teate1122`実行後、`core/schema/validate.js`でsite.json+5ページ全てが`valid: true`。
+- `node build/build.js --site teate1122`で`dist/`に5ページ分のHTML（index/about/activities/contact/privacy）+style.css+assetsを生成。Manager側で実データ反映（「心をほどく、灯りのある暮らし」「秋の手作り市 出店」等）を`grep`で確認し、イベント順序（秋の手作り市→春の暮らしフェア→キャンドル手作りワークショップ＝開催予定→過去の順）も正しいことを確認。
+- 完了条件（要件達成・エラーなし・動作確認済み・コードレビュー済み）を満たしたためT-011を完了とした。
+
+### 次回開始位置
+- 積み残し（Developer/Reviewer報告より）: お問い合わせフォーム（name/email/message）に対応するセクション種別が現状なくテキスト要約に簡略化、ギャラリー画像は未反映（プレースホルダーのまま）、プライバシーポリシー内リンクがテキスト化時に失われる。これらは新セクション追加を伴うためP1-b以降で検討。
+- 次はT-012（P1-b: 並び替え・Undo/Redo・テーマプリセット切替UI・PWAオフライン・WebP最適化）に着手する。
+
+---
+
 ## 2026-08-04 T-010: ビジュアルサイトビルダー P0（MVP）実装
 
 ### 実施内容
