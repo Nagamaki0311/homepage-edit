@@ -9,6 +9,17 @@ const PADDING_Y = ["sm", "md", "lg", "xl"];
 const ALIGN = ["left", "center", "right"];
 const BG_TYPE = ["token", "none"];
 const BG_VALUE = ["bg", "surface", "accent", ""];
+const COLOR_TOKEN_KEYS = ["bg", "surface", "text", "textMuted", "accent", "border"];
+
+// hex表記（#RGB/#RGBA/#RRGGBB/#RRGGBBAA）のみ許可する。
+// CSS名前付き色・rgb()等はエスケープ不要なCSS識別子・数値のみで構成されるため許可するが、
+// 本実装ではP0の範囲としてhex表記のみを安全な値として受け付ける（ホワイトリスト方式）。
+const HEX_COLOR = /^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+
+/** CSS colorとして妥当なhex表記かどうかを判定する（依存ゼロ・正規表現のみ）。 */
+export function isSafeCssColor(value) {
+  return typeof value === "string" && HEX_COLOR.test(value.trim());
+}
 
 function err(errors, path, message) {
   errors.push(`${path}: ${message}`);
@@ -34,6 +45,17 @@ export function validateSite(site) {
     err(errors, "site.theme", "必須です");
   } else if (!site.theme.tokens || typeof site.theme.tokens !== "object") {
     err(errors, "site.theme.tokens", "必須です");
+  } else if (site.theme.tokens.color && typeof site.theme.tokens.color === "object") {
+    const color = site.theme.tokens.color;
+    COLOR_TOKEN_KEYS.forEach((key) => {
+      if (color[key] !== undefined && !isSafeCssColor(color[key])) {
+        err(
+          errors,
+          `site.theme.tokens.color.${key}`,
+          "CSS color として妥当なhex表記（#RGB/#RGBA/#RRGGBB/#RRGGBBAA）である必要があります"
+        );
+      }
+    });
   }
   if (!Array.isArray(site.pages)) {
     err(errors, "site.pages", "配列である必要があります");

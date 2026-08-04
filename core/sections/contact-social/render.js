@@ -2,6 +2,7 @@
 // 依存ゼロ・ブラウザ/Node共有。
 
 import { html, esc } from "../../render/html.js";
+import { resolveUrl } from "../../render/url.js";
 
 export function render(props, ctx) {
   const { heading = "", body = "", showEmail = true, showSocial = true } = props || {};
@@ -13,7 +14,7 @@ export function render(props, ctx) {
     ${body ? html`<p class="contact-social__body">${esc(body)}</p>` : ""}
     ${
       showEmail && email
-        ? html`<p class="contact-social__email"><a href="mailto:${esc(email)}">${esc(email)}</a></p>`
+        ? html`<p class="contact-social__email"><a href="${esc(resolveUrl(`mailto:${email}`))}">${esc(email)}</a></p>`
         : ""
     }
     ${
@@ -21,7 +22,7 @@ export function render(props, ctx) {
         ? html`<ul class="contact-social__list">
       ${social.map(
         (s) =>
-          html`<li><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(s.handle || s.platform)}</a></li>`
+          html`<li><a href="${esc(resolveUrl(s.url))}" target="_blank" rel="noopener noreferrer">${esc(s.handle || s.platform)}</a></li>`
       )}
     </ul>`
         : ""

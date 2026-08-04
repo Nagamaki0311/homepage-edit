@@ -35,13 +35,14 @@
               "properties": {
                 "color": {
                   "type": "object",
+                  "description": "各値はCSS colorとして妥当なhex表記（#RGB/#RGBA/#RRGGBB/#RRGGBBAA）のみ許可。生CSS文字列は使用できない。",
                   "properties": {
-                    "bg": { "type": "string" },
-                    "surface": { "type": "string" },
-                    "text": { "type": "string" },
-                    "textMuted": { "type": "string" },
-                    "accent": { "type": "string" },
-                    "border": { "type": "string" }
+                    "bg": { "type": "string", "pattern": "^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$" },
+                    "surface": { "type": "string", "pattern": "^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$" },
+                    "text": { "type": "string", "pattern": "^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$" },
+                    "textMuted": { "type": "string", "pattern": "^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$" },
+                    "accent": { "type": "string", "pattern": "^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$" },
+                    "border": { "type": "string", "pattern": "^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$" }
                   }
                 },
                 "font": {

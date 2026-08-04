@@ -12,8 +12,17 @@ const FONT_STACKS = {
 const SPACE_Y = { sm: "2rem", md: "3rem", lg: "5rem", xl: "8rem" };
 const GAP = { sm: "0.5rem", md: "1rem", lg: "2rem" };
 
+// hex表記のみ許可する（validate.jsのCOLOR_TOKEN_KEYS判定と同じ基準）。
+// site.jsonが直接編集・インポートされた場合でも、CSSインジェクション（<style>タグ脱出等）を
+// 防ぐための多重防御として、ここでも不正な値はデフォルト値にフォールバックする。
+const HEX_COLOR = /^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+
 function fontStack(id) {
   return FONT_STACKS[id] || FONT_STACKS.system;
+}
+
+function safeColor(value, fallback) {
+  return typeof value === "string" && HEX_COLOR.test(value.trim()) ? value.trim() : fallback;
 }
 
 /** theme（{preset, tokens}）から :root 変数と基本レイアウトCSSを生成する。 */
@@ -25,12 +34,12 @@ export function tokensToCss(theme) {
   const animation = t.animation || {};
 
   const vars = `:root {
-  --color-bg: ${color.bg || "#ffffff"};
-  --color-surface: ${color.surface || "#f4f4f4"};
-  --color-text: ${color.text || "#111111"};
-  --color-text-muted: ${color.textMuted || "#666666"};
-  --color-accent: ${color.accent || "#888888"};
-  --color-border: ${color.border || "#dddddd"};
+  --color-bg: ${safeColor(color.bg, "#ffffff")};
+  --color-surface: ${safeColor(color.surface, "#f4f4f4")};
+  --color-text: ${safeColor(color.text, "#111111")};
+  --color-text-muted: ${safeColor(color.textMuted, "#666666")};
+  --color-accent: ${safeColor(color.accent, "#888888")};
+  --color-border: ${safeColor(color.border, "#dddddd")};
   --font-heading: ${fontStack(font.heading)};
   --font-body: ${fontStack(font.body)};
   --font-scale: ${font.scale ?? 1};

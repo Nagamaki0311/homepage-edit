@@ -3,6 +3,7 @@
 
 import { html, esc } from "../../render/html.js";
 import { resolveAssetUrl, findAsset } from "../../render/assets.js";
+import { resolveUrl } from "../../render/url.js";
 
 export function render(props, ctx) {
   const { heading = "", body = "", image, cta } = props || {};
@@ -23,7 +24,7 @@ export function render(props, ctx) {
     <div class="hero__content">
       <h1>${esc(heading)}</h1>
       <p class="hero__body">${esc(body)}</p>
-      ${cta?.label ? html`<a class="btn" href="${esc(cta.href || "#")}">${esc(cta.label)}</a>` : ""}
+      ${cta?.label ? html`<a class="btn" href="${esc(resolveUrl(cta.href))}">${esc(cta.label)}</a>` : ""}
     </div>
   </div>`;
 }
