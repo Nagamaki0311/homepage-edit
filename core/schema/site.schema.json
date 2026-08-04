@@ -15,6 +15,7 @@
             "id": { "type": "string" },
             "name": { "type": "string" },
             "locale": { "type": "string" },
+            "baseUrl": { "type": "string", "description": "サイトの公開ベースURL（例: https://example.netlify.app）。設定するとog:image/og:urlが絶対URL化される。省略時は相対パスのまま。" },
             "meta": {
               "type": "object",
               "properties": {

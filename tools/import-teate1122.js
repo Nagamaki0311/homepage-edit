@@ -81,6 +81,15 @@ function read(srcRoot, relPath) {
   return readFileSync(join(srcRoot, relPath), "utf-8");
 }
 
+/** astro.config.mjs の site: '...' フィールド（サイトURL）を読む。存在しなければundefined。 */
+function extractAstroSiteUrl(srcRoot) {
+  const path = join(srcRoot, "astro.config.mjs");
+  if (!existsSync(path)) return undefined;
+  const source = readFileSync(path, "utf-8");
+  const m = source.match(/site:\s*['"]([^'"]+)['"]/);
+  return m ? m[1] : undefined;
+}
+
 // ---------------------------------------------------------------------------
 // テーマ抽出: src/styles/global.css の @theme ブロックから色トークンを読む
 // ---------------------------------------------------------------------------
@@ -448,6 +457,7 @@ function buildSite(srcRoot) {
   const color = extractThemeColors(css);
   const socialTs = read(srcRoot, "src/data/social.ts");
   const social = extractSocialLinks(socialTs);
+  const baseUrl = extractAstroSiteUrl(srcRoot);
 
   return {
     schemaVersion: 1,
@@ -455,6 +465,7 @@ function buildSite(srcRoot) {
       id: "teate1122",
       name: "teate1122",
       locale: "ja",
+      ...(baseUrl ? { baseUrl } : {}),
       meta: {
         title: "teate1122 | 心をほどく、灯りのある暮らし",
         description: "teate1122は、日々の暮らしに寄り添う手作りキャンドルをお届けしています。",

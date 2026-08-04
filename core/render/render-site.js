@@ -130,6 +130,16 @@ export function renderSite(site, page, options = {}) {
   const faviconRaw = site?.site?.meta?.favicon;
   const faviconUrl = faviconRaw ? resolveAssetUrl(site, faviconRaw, assetBase) || faviconRaw : "/favicon.svg";
 
+  // baseUrlが設定されている場合、og:image/og:urlを絶対URL化する（未設定時は相対パスのまま＝後方互換）。
+  const baseUrl = site?.site?.baseUrl ? String(site.site.baseUrl).replace(/\/+$/, "") : "";
+  const toAbsoluteUrl = (path) => {
+    if (!baseUrl || !path) return path;
+    if (/^https?:\/\//i.test(path)) return path;
+    return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+  };
+  const ogImageAbsUrl = toAbsoluteUrl(ogImageUrl);
+  const ogUrl = baseUrl ? toAbsoluteUrl(resolveUrl(page?.slug || "/")) : "";
+
   const fullHtml = `<!doctype html>
 <html lang="${locale}">
 <head>
@@ -141,7 +151,8 @@ export function renderSite(site, page, options = {}) {
 <meta property="og:type" content="website">
 <meta property="og:title" content="${title}">
 <meta property="og:description" content="${description}">
-${ogImageUrl ? `<meta property="og:image" content="${esc(ogImageUrl)}">` : ""}
+${ogImageAbsUrl ? `<meta property="og:image" content="${esc(ogImageAbsUrl)}">` : ""}
+${ogUrl ? `<meta property="og:url" content="${esc(ogUrl)}">` : ""}
 ${renderWebfontLinks(site.theme)}
 <link rel="stylesheet" href="${esc(cssHref)}">
 </head>
