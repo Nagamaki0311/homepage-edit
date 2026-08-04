@@ -26,6 +26,7 @@
 | T-011 | ビジュアルサイトビルダー P1-a: teate1122インポートスクリプト（Astroソース→サイトビルダーJSON変換） | 高 | 完了 | developer/reviewer | tools/import-teate1122.jsを新規実装。Reviewer承認済み（軽微指摘のイベント開催予定/過去の分類・ソートも追加修正済み）。Manager側で5ページ全てのビルド・バリデーション・実データ反映を確認済み |
 
 | T-012 | ビジュアルサイトビルダー P1-b: 並び替え（構成シート）・Undo/Redo・テーマプリセット切替UI・PWAオフライン・WebP最適化 | 高 | 完了 | developer/reviewer | 必須修正（ZIPエクスポート例外）対応済み、Reviewer承認。Manager側でビルド確認済み |
+| T-015 | Netlify公開設定の追加・本番デプロイ確認 | 高 | 完了 | claude | netlify.toml追加（publish=リポジトリルート、/を/editor/へリダイレクト）。本番URL https://edit-teate.netlify.app/editor/ で構造確認済み（リダイレクト・core/sitesへの相対パス解決・PWAファイル、いずれも200） |
 
 ## バックログ（未着手・優先度未確定）
 - T-013 (P2想定): GitHub API直接公開（PAT認証・差分確認画面）・複数ページ管理UI（ページ切替導線）・ギャラリー・アニメーション・ダークモード
