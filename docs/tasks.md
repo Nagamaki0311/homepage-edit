@@ -25,11 +25,12 @@
 | T-010 | ビジュアルサイトビルダー P0（MVP）: スキーマ・core/render・基本セクション種別・基本編集・自動保存・プレビュー・ZIPエクスポート・Node CLI | 高 | 完了 | developer/reviewer | セキュリティ2件（href/URLのXSS対策、theme色のCSSインジェクション対策）Reviewer承認済み。cssHref空文字列バグも修正済み。Manager側でPlaywrightによりプレビュー正常表示・セクション選択・プロパティパネル表示を視覚確認済み |
 | T-011 | ビジュアルサイトビルダー P1-a: teate1122インポートスクリプト（Astroソース→サイトビルダーJSON変換） | 高 | 完了 | developer/reviewer | tools/import-teate1122.jsを新規実装。Reviewer承認済み（軽微指摘のイベント開催予定/過去の分類・ソートも追加修正済み）。Manager側で5ページ全てのビルド・バリデーション・実データ反映を確認済み |
 
-| T-012 | ビジュアルサイトビルダー P1-b: 並び替え（構成シート）・Undo/Redo・テーマプリセット切替UI・PWAオフライン・WebP最適化 | 高 | 実装中 | developer | Reviewerが要修正判定（必須修正1件: ZIPエクスポートがhome以外のページで例外。loadInitialStateが全ページ未ロードのため）。並び替え/Undo/Redo/テーマプリセット/PWA/WebPは実装・セキュリティとも問題なしと確認済み |
+| T-012 | ビジュアルサイトビルダー P1-b: 並び替え（構成シート）・Undo/Redo・テーマプリセット切替UI・PWAオフライン・WebP最適化 | 高 | 完了 | developer/reviewer | 必須修正（ZIPエクスポート例外）対応済み、Reviewer承認。Manager側でビルド確認済み |
 
 ## バックログ（未着手・優先度未確定）
-- T-013 (P2想定): GitHub API直接公開（PAT認証・差分確認画面）・複数ページ・ギャラリー・アニメーション・ダークモード
+- T-013 (P2想定): GitHub API直接公開（PAT認証・差分確認画面）・複数ページ管理UI（ページ切替導線）・ギャラリー・アニメーション・ダークモード
 - T-014 (P3想定): 複数サイト管理UI・テンプレート7種・SEO/OGP詳細
+- editor/media/zip.jsが全ページ書き出し時にstyle.css/assetsを重複してZIPに書き込む（T-012レビューで発見、非ブロッキング。優先度低）
 - progress.mdが将来肥大化した場合、docs/progress-archive.md等への分割を検討する（D-006時点では未実施・優先度未確定）
 
 ## メモ

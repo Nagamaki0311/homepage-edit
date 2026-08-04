@@ -19,6 +19,24 @@
 
 ---
 
+## 2026-08-04 T-012 続き: レビュー修正（ZIPエクスポート例外の解消）
+
+### 実施内容
+- Reviewer1回目レビューで必須修正1件（`editor/media/zip.js`のZIPエクスポートが`home`以外の4ページで`page`が`undefined`となり`TypeError`）を指摘。原因は`editor/app/main.js`の`loadInitialState`が`home`ページのみロードしていたこと。
+- `loadInitialState`を、`site.json`の`pages`配列に列挙された全5ページを`Promise.all`で並列fetchし`state.pages`へ格納するよう修正（コミット`616f14e`、変更は`main.js`1ファイルのみ）。ページ切替UI自体はP2スコープのため今回は追加していない。
+- Reviewer最終レビューで承認。ZIPエクスポートが5ページ全て正しく含む形で例外なく動作することを確認。
+
+### 結果
+- Playwrightでエディタの「ZIPで書き出し」ボタンを実行し例外なし、ダウンロードしたZIPに`index/about/activities/contact/privacy.html`と対応する`sites-data/pages/*.json`が全て含まれることを確認。
+- Manager側で`node build/build.js --site teate1122`を再実行し、5ページ全て正常生成されることを確認。
+- Reviewerが非ブロッキングの改善点として「`zip.js`が全ページ書き出し時に`style.css`/`assets`を重複してZIPへ書き込む」ことを発見。機能上のブロッカーではないためバックログに追加し、完了条件（要件達成・エラーなし・動作確認済み・コードレビュー済み）を満たしたためT-012を完了とした。
+
+### 次回開始位置
+- T-013（P2想定: GitHub API直接公開・複数ページ管理UI・ギャラリー・アニメーション・ダークモード）は現時点では未着手。まずはP0〜P1-bまでの成果物を公開（Netlify等）し、実際に使える状態にすることを優先する。
+- バックログのzip.js重複書き込みは優先度低のため保留。
+
+---
+
 ## 2026-08-04 T-012: ビジュアルサイトビルダー P1-b実装（並び替え・Undo/Redo・テーマプリセット・PWAオフライン・WebP最適化）
 
 ### 実施内容
