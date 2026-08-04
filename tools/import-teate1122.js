@@ -153,6 +153,20 @@ function eventToCardItem(event) {
   };
 }
 
+/** イベント群を開催予定（日付昇順）/過去（日付降順）に分類する。
+ *  src/pages/activities.astro の upcomingEvents/pastEvents と同じロジック。
+ */
+function splitUpcomingPast(events) {
+  const now = new Date();
+  const upcoming = events
+    .filter((e) => new Date(e.date).getTime() >= now.getTime())
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const past = events
+    .filter((e) => new Date(e.date).getTime() < now.getTime())
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  return { upcoming, past };
+}
+
 // ---------------------------------------------------------------------------
 // 各ページの抽出
 // ---------------------------------------------------------------------------
@@ -265,8 +279,12 @@ function buildActivitiesPage(srcRoot, events) {
   const paragraphs = extractAllTags(source, "p"); // [intro, candle, events, workshop]
   const headings2 = extractAllTags(source, "h2"); // [キャンドル制作, イベント出店, ワークショップ]
 
-  const eventCards = events.filter((e) => e.type === "event").map(eventToCardItem);
-  const workshopCards = events.filter((e) => e.type === "workshop").map(eventToCardItem);
+  const { upcoming: upcomingEvents, past: pastEvents } = splitUpcomingPast(
+    events.filter((e) => e.type === "event")
+  );
+  const { upcoming: upcomingWorkshops, past: pastWorkshops } = splitUpcomingPast(
+    events.filter((e) => e.type === "workshop")
+  );
 
   return {
     id: "activities",
@@ -311,7 +329,15 @@ function buildActivitiesPage(srcRoot, events) {
         id: "s4",
         type: "activity-cards",
         visible: true,
-        props: { heading: "イベント出店 一覧", items: eventCards },
+        props: { heading: "イベント出店・開催予定", items: upcomingEvents.map(eventToCardItem) },
+        style: { paddingY: "lg", align: "center", bg: { type: "token", value: "surface" } },
+        animation: { preset: "inherit", delay: 0 },
+      },
+      {
+        id: "s4b",
+        type: "activity-cards",
+        visible: true,
+        props: { heading: "イベント出店・過去のイベント", items: pastEvents.map(eventToCardItem) },
         style: { paddingY: "lg", align: "center", bg: { type: "token", value: "surface" } },
         animation: { preset: "inherit", delay: 0 },
       },
@@ -332,7 +358,15 @@ function buildActivitiesPage(srcRoot, events) {
         id: "s6",
         type: "activity-cards",
         visible: true,
-        props: { heading: "ワークショップ 一覧", items: workshopCards },
+        props: { heading: "ワークショップ・開催予定", items: upcomingWorkshops.map(eventToCardItem) },
+        style: { paddingY: "lg", align: "center", bg: { type: "token", value: "surface" } },
+        animation: { preset: "inherit", delay: 0 },
+      },
+      {
+        id: "s6b",
+        type: "activity-cards",
+        visible: true,
+        props: { heading: "ワークショップ・過去のワークショップ", items: pastWorkshops.map(eventToCardItem) },
         style: { paddingY: "lg", align: "center", bg: { type: "token", value: "surface" } },
         animation: { preset: "inherit", delay: 0 },
       },
