@@ -22,7 +22,7 @@
 | T-006 | AI開発OS全体レビュー（重複排除・Hook環境検証） | 高 | 完了 | claude | CLAUDE.mdのAgent説明重複を除去、Manager-Hook接続を明文化、Hook環境依存性を文書化（D-006参照） |
 | T-007 | Agent別モデル最適化（Model Routing）の導入 | 中 | 完了 | claude | Planner=opus/Developer・Reviewer=sonnetに固定。軽量レビューはAgent呼び出し時のmodelパラメータ上書きで対応（D-007参照） |
 | T-008 | ビジュアルサイトビルダー: 設計フェーズ（アーキテクチャ・データ構造・ディレクトリ・UI/UX・技術選定・段階的スコープ） | 高 | 完了 | planner | Planner提案をUser承認（D-009参照）。以降はP0〜P3のフェーズ別タスク（T-010以降）で実装管理する |
-| T-010 | ビジュアルサイトビルダー P0（MVP）: スキーマ・core/render・基本セクション種別・基本編集・自動保存・プレビュー・ZIPエクスポート・Node CLI | 高 | レビュー中 | developer | D-009参照。実装完了、Node CLI・エディタともE2E確認済み（progress.md参照）。Reviewer未実施 |
+| T-010 | ビジュアルサイトビルダー P0（MVP）: スキーマ・core/render・基本セクション種別・基本編集・自動保存・プレビュー・ZIPエクスポート・Node CLI | 高 | 実装中 | developer | Reviewerが要修正判定（必須修正2件: href/URLのXSS対策、theme.tokens.colorのCSS/CSSインジェクション対策）。差し戻し中。アーキテクチャ制約（同型レンダラー・依存ゼロ）は遵守確認済み |
 
 ## バックログ（未着手・優先度未確定）
 
