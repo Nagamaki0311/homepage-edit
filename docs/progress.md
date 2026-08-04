@@ -19,6 +19,52 @@
 
 ---
 
+## 2026-08-04 T-010: ビジュアルサイトビルダー P0（MVP）実装
+
+### 実施内容
+- `core/`（依存ゼロ・DOM/Node API非依存）を実装。`core/render/html.js`（タグ付きテンプレート+エスケープ）、`core/render/assets.js`（assetId解決）、`core/render/render-page.js`・`render-site.js`（JSON→{html,css}）。
+- `core/schema/site.schema.json`（JSON Schema、site/pageの2形状をdefinitionsで表現）と`core/schema/validate.js`（外部ライブラリ不使用の手書き軽量バリデータ。schemaVersion固定・セクション種別列挙・style（paddingY/align/bg）のトークン限定チェックを含む）。
+- `core/sections/`にセクション5種を実装（各`define.js`+`render.js`+`style.css`）: `hero`, `text`, `image-text`, `contact-social`（site.jsonのcontact/socialを参照）, `activity-cards`（teate1122の活動3項目に対応するため追加）。`core/sections/index.js`がレジストリ。
+  - 設計判断: `style.css`は人間可読のドキュメント用ファイルとして実体を保持しつつ、実際にrenderSiteが集約するCSSは各`render.js`が`export const css`として持つ同一内容の文字列とした。core/render自体がファイルI/O（fs/fetch）を一切行わない制約（ブラウザ/Node両対応の依存ゼロ）を満たすための設計。
+  - `animation`フィールドはスキーマ上受理するが、P0では視覚効果を実装しない（D-009でアニメーションはP2スコープと明記されているため）。
+- `core/theme/tokens-to-css.js`: テーマtokens→CSS変数+構造クラス（padding/align/bg/ボタン形状）。フォントIDからフォントスタックへのマッピングを内包。
+- `build/build.js`: Node CLI。`sites/<siteId>/`を読み込み検証し、`dist/`にHTML・style.css・assetsを出力。
+- `sites/teate1122/site.json`・`pages/home.json`: `/home/user/teate1122/src/pages/index.astro`・`src/data/social.ts`・`src/styles/global.css`の内容（配色トークン、ヒーロー/理念/活動3項目/SNS・お問い合わせ）をダミーデータとして反映。プレースホルダー画像`assets/hero.svg`を同梱。
+- `templates/personal.json`: 個人サイト向けの初期セクション構成（hero/text/image-text/contact-social）。
+- `editor/`（ビルド不要の静的PWA）: `index.html`+`style.css`（エディタ自身のUI）、`app/store.js`（pub/subストア、パスベースの部分更新）、`app/autosave.js`（IndexedDB薄いwrapper、デバウンス保存）、`app/main.js`（配線）、`ui/canvas.js`（`core/render`の出力をiframeにsrcdocで描画、セクションタップで選択）、`ui/panels/props-panel.js`（`define.js`からフォーム自動生成、テキスト/テキストエリア/真偽/セレクト/画像/リストに対応）、`ui/panels/theme-panel.js`（色トークンをcolor inputで編集）、`media/import.js`（画像アップロード→data URLとしてsite.assetsに追加）、`media/zip.js`（依存ゼロのSTORE方式ZIPエンコーダ+CRC32実装、ZIPエクスポート機能）、`manifest.webmanifest`+`sw.js`（PWA最小構成、オフラインキャッシュ戦略はP1へ委譲）。
+- `package.json`に`"type": "module"`を追加（ビルドツールなし、Node標準ESMのみ）。`.gitignore`に`dist/`を追加。
+- 明示的にP0範囲外としたもの: `app/history.js`（Undo/Redo、P1）、`app/router.js`（複数ページ、P2）、`ui/sheets/`（ボトムシートUI、簡易パネルで代替）、`media/resize-webp.js`（WebP最適化、P1）。
+
+### 結果
+- `core/`内を`grep`で確認し、`require(`/`process.`/`node:`/`document.`/`window.`/`fetch(`/`fs.`/`__dirname`/`import.meta.url`のいずれも不使用であることを確認（依存ゼロ・ブラウザ/Node非依存を満たす）。
+- `node build/build.js --site teate1122`を実行し、`dist/index.html`・`dist/style.css`・`dist/assets/hero.svg`が正しく生成されることを確認（サイズ: html 3430B, css 4428B）。
+- Playwrightでheadless Chromiumを導入し、`editor/index.html`を`python3 -m http.server`配信下でE2E確認: (1) プレビューiframeにheroセクションの見出しが表示される、(2) セクションをタップ→プロパティパネルが表示→テキスト編集→プレビューに即時反映、(3) テーマタブで色を変更→ZIPエクスポート→ダウンロードされたZIPの`style.css`に変更後の色（#ff0000）が反映されている、(4) ZIPの中身（`assets/hero.svg`, `index.html`, `style.css`, `sites-data/pages/home.json`, `sites-data/site.json`）とZIPマジックバイトを確認。コンソールエラーなし。
+- `node --check`で全editor/*.jsファイルの構文を確認済み。
+
+### 次回開始位置
+- レビュー未実施（Reviewer未起動）。ManagerがReviewerを起動し、コードレビューを経て完了条件を満たすか判定する。
+- 積み残し: バリデーション未使用箇所（editorはvalidate.jsを呼んでいない）、`resize-webp.js`/`history.js`/`router.js`はP1以降で追加、`site.assets`に対する重複データURL保存によるIndexedDB肥大化はP1で見直しの余地あり。
+
+---
+
+## 2026-08-04 T-010 続き: レビュー修正2ラウンド＋Manager発見バグの修正
+
+### 実施内容
+- Reviewer1回目レビューで必須修正2件（href/URLのXSS対策、theme.tokens.colorのCSS/CSSインジェクション対策）を指摘。`core/render/url.js`（新規、`resolveUrl()`）、`core/schema/validate.js`（`isSafeCssColor()`）、`core/theme/tokens-to-css.js`（`safeColor()`多重防御）で対応（コミット`513f1c2`）。
+- Reviewer再レビューで、`resolveUrl()`が制御文字（タブ/改行/CR）混入によるスキーム判定バイパスを防げていないことを指摘。`resolveUrl()`にスキーム判定前の制御文字除去ステップを追加（コミット`ecccf85`）。Reviewer最終レビューで承認。
+- Manager側で`node build/build.js --site teate1122`実行後、Playwrightでエディタを実機確認したところ、プレビューiframeが無スタイルで表示される別バグを発見。原因は`core/render/render-site.js`の`options.cssHref || "style.css"`が空文字列を偽値として扱い、`editor/ui/canvas.js`のCSSインライン化（`<link rel="stylesheet" href="">`を対象にした文字列置換）が一致しなくなっていたこと。`options.cssHref !== undefined ? options.cssHref : "style.css"`に修正（コミット`cc9b163`）。
+
+### 結果
+- `node build/build.js --site teate1122`成功、`dist/`に正しく生成されることを継続確認。
+- Manager側でPlaywright（Chromium, iPhone相当ビューポート）により、修正後のエディタを視覚確認: ヒーロー画像が正方形枠に正しく収まりテキストが正常なレイアウトで表示されること、セクションタップでプロパティパネル（見出し・本文・背景画像・ボタン文言の編集フィールド）が正しく開くこと、コンソールエラーがないことを確認。
+- Reviewerによるセキュリティレビュー2ラウンド（要修正→要修正→承認）を経て、必須修正はすべて解消。完了条件（要件達成・エラーなし・動作確認済み・コードレビュー済み）を満たしたためT-010を完了とした。
+
+### 次回開始位置
+- T-011（P1想定）: 並び替え・Undo/Redo・テーマプリセット・PWAオフライン・WebP最適化、teate1122インポートスクリプトから着手する。
+- 積み残し（P0からの継続）: editorが`validate.js`を保存前に呼んでいない点はP1で対応を検討。
+
+---
+
 ## 2026-08-03 T-007: Agent別モデル最適化（Model Routing）の導入
 
 ### 実施内容

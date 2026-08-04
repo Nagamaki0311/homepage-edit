@@ -1,0 +1,3 @@
+/* core/sections/text/style.css: render.js の css エクスポートと同一内容のドキュメント用ファイル */
+.text-block__body { color: var(--color-text-muted); max-width: 34em; }
+.section[data-align="center"] .text-block__body { margin-inline: auto; }

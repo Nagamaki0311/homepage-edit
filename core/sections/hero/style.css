@@ -1,0 +1,14 @@
+/* core/sections/hero/style.css
+ * render.js の `css` エクスポートと同一内容を保持するドキュメント用ファイル。
+ * core/render は実行時にファイルI/Oを行わないため、実際に描画へ使われるのは render.js 側の文字列である。
+ */
+.hero { display: flex; flex-direction: column; align-items: center; gap: 2rem; }
+.hero__media { width: 100%; max-width: 480px; aspect-ratio: 1 / 1; overflow: hidden; }
+.hero__img { width: 100%; height: 100%; object-fit: cover; object-position: var(--focal-x) var(--focal-y); transform: scale(var(--zoom)); }
+.hero__body { color: var(--color-text-muted); max-width: 34em; margin-inline: auto; }
+@media (min-width: 768px) {
+  .hero { flex-direction: row; text-align: left; gap: 4rem; }
+  .hero__media { max-width: none; flex: 1; }
+  .hero__content { flex: 1; }
+}
+.section[data-align="center"] .hero__body { margin-inline: auto; }

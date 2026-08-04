@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://homepage-edit/core/schema/site.schema.json",
+  "title": "site.json / pages/*.json スキーマ (v1)",
+  "definitions": {
+    "site": {
+      "type": "object",
+      "required": ["schemaVersion", "site", "theme", "pages"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "site": {
+          "type": "object",
+          "required": ["id", "name", "locale"],
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "locale": { "type": "string" },
+            "meta": {
+              "type": "object",
+              "properties": {
+                "title": { "type": "string" },
+                "description": { "type": "string" },
+                "ogImage": { "type": "string" }
+              }
+            }
+          }
+        },
+        "theme": {
+          "type": "object",
+          "required": ["tokens"],
+          "properties": {
+            "preset": { "type": "string" },
+            "tokens": {
+              "type": "object",
+              "properties": {
+                "color": {
+                  "type": "object",
+                  "description": "各値はCSS colorとして妥当なhex表記（#RGB/#RGBA/#RRGGBB/#RRGGBBAA）のみ許可。生CSS文字列は使用できない。",
+                  "properties": {
+                    "bg": { "type": "string", "pattern": "^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$" },
+                    "surface": { "type": "string", "pattern": "^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$" },
+                    "text": { "type": "string", "pattern": "^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$" },
+                    "textMuted": { "type": "string", "pattern": "^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$" },
+                    "accent": { "type": "string", "pattern": "^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$" },
+                    "border": { "type": "string", "pattern": "^#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$" }
+                  }
+                },
+                "font": {
+                  "type": "object",
+                  "properties": {
+                    "heading": { "type": "string" },
+                    "body": { "type": "string" },
+                    "scale": { "type": "number" }
+                  }
+                },
+                "space": {
+                  "type": "object",
+                  "properties": {
+                    "sectionY": { "enum": ["sm", "md", "lg", "xl"] },
+                    "gap": { "enum": ["sm", "md", "lg"] }
+                  }
+                },
+                "button": {
+                  "type": "object",
+                  "properties": {
+                    "shape": { "enum": ["square", "round"] },
+                    "fill": { "enum": ["outline", "solid"] }
+                  }
+                },
+                "animation": {
+                  "type": "object",
+                  "properties": {
+                    "preset": { "type": "string" },
+                    "duration": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "nav": {
+          "type": "object",
+          "properties": {
+            "auto": { "type": "boolean" },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["pageId", "label"],
+                "properties": {
+                  "pageId": { "type": "string" },
+                  "label": { "type": "string" },
+                  "visible": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "social": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["platform", "url"],
+            "properties": {
+              "platform": { "type": "string" },
+              "url": { "type": "string" },
+              "handle": { "type": "string" }
+            }
+          }
+        },
+        "contact": {
+          "type": "object",
+          "properties": {
+            "email": { "type": "string" },
+            "formProvider": { "type": "string" }
+          }
+        },
+        "pages": { "type": "array", "items": { "type": "string" } },
+        "assets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "file"],
+            "properties": {
+              "id": { "type": "string" },
+              "file": { "type": "string" },
+              "w": { "type": "number" },
+              "h": { "type": "number" },
+              "alt": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "page": {
+      "type": "object",
+      "required": ["id", "slug", "sections"],
+      "properties": {
+        "id": { "type": "string" },
+        "slug": { "type": "string" },
+        "title": { "type": "string" },
+        "sections": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/section" }
+        }
+      }
+    },
+    "section": {
+      "type": "object",
+      "required": ["id", "type", "props"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": {
+          "enum": ["hero", "text", "image-text", "contact-social", "activity-cards"]
+        },
+        "visible": { "type": "boolean" },
+        "props": { "type": "object" },
+        "style": {
+          "type": "object",
+          "description": "トークン名または列挙値のみ許可。生CSS・px値は許可しない。",
+          "properties": {
+            "paddingY": { "enum": ["sm", "md", "lg", "xl"] },
+            "align": { "enum": ["left", "center", "right"] },
+            "bg": {
+              "type": "object",
+              "required": ["type"],
+              "properties": {
+                "type": { "enum": ["token", "none"] },
+                "value": { "enum": ["bg", "surface", "accent", ""] }
+              }
+            }
+          }
+        },
+        "animation": {
+          "type": "object",
+          "properties": {
+            "preset": { "type": "string" },
+            "delay": { "type": "number" }
+          }
+        }
+      }
+    }
+  },
+  "oneOf": [{ "$ref": "#/definitions/site" }, { "$ref": "#/definitions/page" }]
+}
