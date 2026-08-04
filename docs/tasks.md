@@ -21,6 +21,7 @@
 | T-005 | SessionStart/PreCompact Hookの導入 | 中 | 完了 | claude | .claude/settings.jsonを新設。tasks.md/progress.mdの自動表示と圧縮前リマインダーを1行shellコマンドで実装（D-005参照） |
 | T-006 | AI開発OS全体レビュー（重複排除・Hook環境検証） | 高 | 完了 | claude | CLAUDE.mdのAgent説明重複を除去、Manager-Hook接続を明文化、Hook環境依存性を文書化（D-006参照） |
 | T-007 | Agent別モデル最適化（Model Routing）の導入 | 中 | 完了 | claude | Planner=opus/Developer・Reviewer=sonnetに固定。軽量レビューはAgent呼び出し時のmodelパラメータ上書きで対応（D-007参照） |
+| T-008 | ビジュアルサイトビルダー（ノーコードWebサイトビルダー）の設計・実装 | 高 | 計画中 | planner | スマホファーストのWYSIWYGサイトビルダー。JSON→HTML/CSS生成方式、teate1122向けだが将来複数サイト管理を見据えた設計。フレームワーク非依存・PWA対応 |
 
 ## バックログ（未着手・優先度未確定）
 
