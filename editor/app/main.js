@@ -28,11 +28,16 @@ async function loadInitialState() {
   const cached = await loadSite(SITE_ID);
   if (cached) return cached;
 
-  const [site, home] = await Promise.all([
-    fetch(`../sites/${SITE_ID}/site.json`).then((r) => r.json()),
-    fetch(`../sites/${SITE_ID}/pages/home.json`).then((r) => r.json()),
-  ]);
-  return { site, pages: { home }, currentPageId: "home" };
+  const site = await fetch(`../sites/${SITE_ID}/site.json`).then((r) => r.json());
+  const pageEntries = await Promise.all(
+    site.pages.map((pageId) =>
+      fetch(`../sites/${SITE_ID}/pages/${pageId}.json`)
+        .then((r) => r.json())
+        .then((page) => [pageId, page])
+    )
+  );
+  const pages = Object.fromEntries(pageEntries);
+  return { site, pages, currentPageId: "home" };
 }
 
 function renderSectionsTab(store) {
