@@ -1,0 +1,6 @@
+/* core/sections/contact-social/style.css: render.js の css エクスポートと同一内容のドキュメント用ファイル */
+.contact-social__body { color: var(--color-text-muted); max-width: 34em; margin-inline: auto; }
+.contact-social__list { list-style: none; padding: 0; margin: 1.5rem 0 0; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.contact-social__list a { color: var(--color-text); text-decoration: underline; text-underline-offset: 4px; }
+.section[data-align="left"] .contact-social__body,
+.section[data-align="left"] .contact-social__list { margin-inline: 0; justify-content: flex-start; }

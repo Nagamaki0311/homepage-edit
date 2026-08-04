@@ -1,0 +1,58 @@
+{
+  "name": "個人サイト",
+  "description": "個人ブランド・個人事業向けの初期セクション構成テンプレート。",
+  "page": {
+    "id": "home",
+    "slug": "/",
+    "title": "トップ",
+    "sections": [
+      {
+        "id": "s1",
+        "type": "hero",
+        "visible": true,
+        "props": {
+          "heading": "見出しテキスト",
+          "body": "ここに紹介文を入力してください。",
+          "image": null,
+          "cta": { "label": "詳しく見る", "href": "#about" }
+        },
+        "style": { "paddingY": "xl", "align": "center", "bg": { "type": "token", "value": "bg" } },
+        "animation": { "preset": "inherit", "delay": 0 }
+      },
+      {
+        "id": "s2",
+        "type": "text",
+        "visible": true,
+        "props": { "heading": "理念", "body": "ここに理念・想いを入力してください。" },
+        "style": { "paddingY": "lg", "align": "center", "bg": { "type": "token", "value": "surface" } },
+        "animation": { "preset": "inherit", "delay": 0 }
+      },
+      {
+        "id": "s3",
+        "type": "image-text",
+        "visible": true,
+        "props": {
+          "heading": "サービス紹介",
+          "body": "ここにサービスや商品について入力してください。",
+          "image": null,
+          "imagePosition": "left"
+        },
+        "style": { "paddingY": "lg", "align": "left", "bg": { "type": "token", "value": "bg" } },
+        "animation": { "preset": "inherit", "delay": 0 }
+      },
+      {
+        "id": "s4",
+        "type": "contact-social",
+        "visible": true,
+        "props": {
+          "heading": "お問い合わせ",
+          "body": "ご質問・ご相談などお気軽にお問い合わせください。",
+          "showEmail": true,
+          "showSocial": true
+        },
+        "style": { "paddingY": "lg", "align": "center", "bg": { "type": "token", "value": "surface" } },
+        "animation": { "preset": "inherit", "delay": 0 }
+      }
+    ]
+  }
+}

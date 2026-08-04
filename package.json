@@ -1,0 +1,10 @@
+{
+  "name": "homepage-edit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "ビジュアルサイトビルダー。core/render は依存ゼロのESモジュールで、ブラウザ(editor)とNode(build CLI)から共有される。",
+  "scripts": {
+    "build": "node build/build.js --site teate1122"
+  }
+}

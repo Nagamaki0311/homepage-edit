@@ -1,0 +1,10 @@
+{
+  "name": "ビジュアルサイトビルダー",
+  "short_name": "SiteBuilder",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1f1f1f",
+  "theme_color": "#1f1f1f",
+  "icons": []
+}

@@ -1,0 +1,10 @@
+/* core/sections/image-text/style.css: render.js の css エクスポートと同一内容のドキュメント用ファイル */
+.image-text { display: flex; flex-direction: column; gap: 1.5rem; }
+.image-text__media { width: 100%; aspect-ratio: 4 / 3; overflow: hidden; background: var(--color-surface); }
+.image-text__img { width: 100%; height: 100%; object-fit: cover; object-position: var(--focal-x) var(--focal-y); transform: scale(var(--zoom)); }
+.image-text__body { color: var(--color-text-muted); }
+@media (min-width: 768px) {
+  .image-text { flex-direction: row; align-items: center; gap: 3rem; }
+  .image-text__media, .image-text__content { flex: 1; }
+  .image-text[data-image-position="right"] { flex-direction: row-reverse; }
+}
