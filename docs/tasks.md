@@ -27,8 +27,8 @@
 
 | T-012 | ビジュアルサイトビルダー P1-b: 並び替え（構成シート）・Undo/Redo・テーマプリセット切替UI・PWAオフライン・WebP最適化 | 高 | 完了 | developer/reviewer | 必須修正（ZIPエクスポート例外）対応済み、Reviewer承認。Manager側でビルド確認済み |
 | T-015 | Netlify公開設定の追加・本番デプロイ確認 | 高 | 完了 | claude | netlify.toml追加（publish=リポジトリルート、/を/editor/へリダイレクト）。本番URL https://edit-teate.netlify.app/editor/ で構造確認済み（リダイレクト・core/sitesへの相対パス解決・PWAファイル、いずれも200） |
-| T-016 | core/renderのパリティ修正（ヘッダー/ナビ・フッター・OGP/favicon・Netlify Forms対応・Webフォント読み込み） | 高 | 実装中 | developer | 「更新」ボタン公開機能の前提作業。D-010参照。本番切替前に既存teate1122公開サイトと機能・見た目が見劣りしない状態にする |
-| T-017 | teate1122リポジトリのビルド方式移行（Astro→ビルド不要の静的サイト、legacy-astro/退避、builder-previewブランチでの確認） | 高 | 未着手 | developer | D-010参照。T-016完了後に着手 |
+| T-016 | core/renderのパリティ修正（ヘッダー/ナビ・フッター・OGP/favicon・Netlify Forms対応・Webフォント読み込み） | 高 | 完了 | developer/reviewer | Reviewer承認済み（推奨事項2件: og:image/og:urlの絶対URL化はT-017でベースURL解決とセットで対応）。Manager側でPlaywright視覚確認済み（ヘッダー/ナビ/フッター/フォーム表示、既存編集機能に影響なし） |
+| T-017 | teate1122リポジトリのビルド方式移行（Astro→ビルド不要の静的サイト、legacy-astro/退避、builder-previewブランチでの確認、サイトのベースURL解決とog:image/og:url絶対URL化） | 高 | 実装中 | developer | D-010参照。T-016のReviewer推奨事項（og:image/og:url絶対URL化）を含めて対応 |
 | T-018 | 「更新」ボタンによるGitHub直接公開機能（Git Data API・PAT管理・確認シート・進捗表示） | 高 | 未着手 | developer | D-010参照。T-017完了後に着手 |
 
 ## バックログ（未着手・優先度未確定）
