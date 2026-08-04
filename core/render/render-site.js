@@ -134,7 +134,7 @@ export function renderSite(site, page, options = {}) {
   const baseUrl = site?.site?.baseUrl ? String(site.site.baseUrl).replace(/\/+$/, "") : "";
   const toAbsoluteUrl = (path) => {
     if (!baseUrl || !path) return path;
-    if (/^https?:\/\//i.test(path)) return path;
+    if (/^(https?:|data:)/i.test(path)) return path;
     return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
   };
   const ogImageAbsUrl = toAbsoluteUrl(ogImageUrl);
