@@ -97,7 +97,7 @@
       "type": "contact-social",
       "visible": true,
       "props": {
-        "heading": "SNS・お問い合わせ",
+        "heading": "",
         "body": "準備中のダミーテキストです。日々の制作の様子はSNSで発信しています。 準備中のダミーテキストです。ご質問やオーダーメイドのご相談など、お気軽にお問い合わせください。",
         "showEmail": false,
         "showSocial": true

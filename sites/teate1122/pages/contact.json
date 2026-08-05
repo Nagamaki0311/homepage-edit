@@ -29,7 +29,7 @@
       "type": "contact-social",
       "visible": true,
       "props": {
-        "heading": "SNS",
+        "heading": "",
         "body": "",
         "showEmail": false,
         "showSocial": true
