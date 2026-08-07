@@ -19,6 +19,24 @@
 
 ---
 
+## 2026-08-07 T-018/T-019/T-020: PR#2マージと本番デプロイ状況の確認
+
+### 実施内容
+- T-019・T-020・T-018の3タスクをまとめたPR #2（`claude/homepage-edit-site-builder` → `main`）を作成しマージ（マージコミット`67e1bb7`）。マージ前にNetlify Deploy Preview（`homepageedit`・`edit-teate`の両プロジェクト）が成功することを確認済み。
+- マージ後、本番URL（`https://edit-teate.netlify.app/editor/`, `https://homepageedit.netlify.app/editor/`）に更新ボタン（`#publish-btn`）が反映されるか複数回confirmしたが反映されず。
+- User提供のNetlifyダッシュボードのスクリーンショットにより原因判明: Netlifyチーム「NK」が運用クレジット（operational credits）で稼働しており、**本番デプロイ（production deploys）とAgent Runnerが一時停止中**。公開済みサイトは稼働中だが新規pushの反映は停止している状態（プラン超過またはクレジット枯渇によるもの、アップグレードまたは次回請求サイクルまで解除されない旨がNetlify UIに表示）。
+- User自身がPR #2のDeploy Preview URL（一時的なプレビュー環境、本番停止の影響を受けない）で実際に「更新」ボタン・GitHubトークン入力画面までの動作を確認済み。機能自体は正しく動作していることを確認できた。
+
+### 結果
+- T-018/T-019/T-020のコード実装・レビュー・mainマージはすべて完了。機能はDeploy Preview環境で実際に動作確認済み（更新ボタン→PAT入力画面まで到達）。
+- 本番URLへの反映は、Netlify側の運用クレジット停止が解除され次第（Userのプランアップグレードまたは次回請求サイクル）自動的に行われる見込み。こちらの実装側で対応できる事項ではない。
+
+### 次回開始位置
+- Netlifyの本番デプロイ停止が解除された後、`https://edit-teate.netlify.app/editor/`が最新版になっていることを確認する。
+- 実際のfine-grained PAT（対象リポジトリ`Nagamaki0311/teate1122`限定・Contents読み書き権限）を発行し、「更新」ボタンから実際のpush（teate1122の`claude/teate1122-homepage-9jsx1l`ブランチへの単一コミット）が成功することをUser操作で確認する。これが完了すれば「編集・更新・管理用ウェブアプリ」としてT-018〜T-020を含む完成条件を満たす。
+
+---
+
 ## 2026-08-07 T-018: 「更新」ボタンによるGitHub直接公開機能
 
 ### 実施内容
