@@ -11,6 +11,10 @@
 // node標準モジュール（fs/path/url）のみを使い、外部パッケージは追加していない。
 //
 // 使い方: node tools/import-teate1122.js [--src <teate1122リポジトリのパス>]
+//
+// 注意（T-020以降）: 本スクリプトはT-020（トップページへのコンテンツ集約）以前の
+// 5ページ構成（home/about/activities/contact/privacy）を前提にしている。
+// 再実行するとsites/teate1122/のデータが5ページ構成に上書きされ、T-020での統合内容が失われるため、再実行しないこと。
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";

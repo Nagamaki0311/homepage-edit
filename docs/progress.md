@@ -19,6 +19,30 @@
 
 ---
 
+## 2026-08-07 T-020: トップページへのコンテンツ集約（1ページサイト化）
+
+### 実施内容
+- `core/render/render-page.js`の`renderSection`で`<section>`に`id="${esc(section.id)}"`を追加（アンカーリンク先として利用。`data-section-id`属性は既存UI互換のため維持）。
+- `core/render/render-site.js`の`renderNavLinks`に、`item.href`が指定されている場合は`resolveUrl(item.href)`をそのまま使う分岐を追加（pageId経由の既存ロジックは維持）。`aria-current="page"`は`href`が`#`始まりでなく、かつ現在ページの`slug`と完全一致する場合のみ付与。
+- `core/schema/site.schema.json`の`nav.items`を`required: ["label"]`＋`anyOf`（`pageId`または`href`のいずれか必須）に変更し、`href`プロパティ（文字列）を追加。
+- `sites/teate1122/pages/home.json`を、旧`about.json`/`activities.json`/`contact.json`/旧`home.json`の内容を統合した12セクション構成（`hero`/`profile`/`philosophy`/`activities`/`candle-making`/`events`/`events-upcoming`/`events-past`/`workshop`/`workshop-upcoming`/`workshop-past`（`visible: false`）/`contact`）に再編。`hero`のCTAリンクは`#activities`に変更。`philosophy`は旧about.jsonの長文版を採用（旧home.jsonの短い理念文は不採用）。`contact`はT-019で見出しを空文字にした最新のcontact-social構造を踏襲し、フォームは1つに統合。
+- `sites/teate1122/site.json`の`pages`を`["home", "privacy"]`に変更、`nav.items`を`href`方式（`/#profile`, `/#activities`, `/#contact`）に変更。
+- `sites/teate1122/pages/about.json`・`activities.json`・`contact.json`を削除。
+- `tools/import-teate1122.js`冒頭に、T-020以降は再実行しない旨の注意コメントを追加（再実行すると5ページ構成に戻ってしまうため）。
+- 計画外だが必要な追加修正: `editor/sw.js`のPWAプリキャッシュ対象リスト（`APP_SHELL`）が削除済みの`about.json`/`activities.json`/`contact.json`を参照したままだと`cache.addAll`が例外を投げてapp shell全体のプリキャッシュが失敗する（`install`ハンドラで例外はcatchされ握りつぶされるため気づきにくい）ため、当該3エントリを削除し`CACHE_VERSION`を`v1`→`v2`に更新した。
+
+### 結果
+- `node build/build.js --site teate1122`で`dist/`に`index.html`・`privacy.html`・`style.css`・`assets/`のみが生成され、`about.html`/`activities.html`/`contact.html`は生成されないことを確認。
+- `dist/index.html`に`id="hero"`/`id="profile"`/`id="philosophy"`/`id="activities"`/`id="candle-making"`/`id="events"`/`id="events-upcoming"`/`id="events-past"`/`id="workshop"`/`id="workshop-upcoming"`/`id="contact"`が存在し、`id="workshop-past"`（`visible: false`）は含まれないことを確認。
+- ヘッダーナビが`<a href="/#profile">`/`<a href="/#activities">`/`<a href="/#contact">`になっていることを確認。
+- `core/schema/validate.js`の`validateSite`/`validatePage`で`site.json`/`home.json`がともに`valid: true`であることを確認。
+
+### 次回開始位置
+- Reviewerによるレビュー（T-020）。承認後、Manager側でPlaywright等による実ブラウザでのアンカー遷移・ナビ表示の視覚確認を行う。
+- レビュー承認後、T-018（「更新」ボタンによるGitHub直接公開機能）に着手予定。
+
+---
+
 ## 2026-08-04 T-017: teate1122ビルド方式移行・OGP絶対URL化
 
 ### 実施内容

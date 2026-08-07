@@ -3,7 +3,7 @@
 // バージョンはCACHE_VERSIONで管理し、更新時にactivateイベントで古いキャッシュを破棄する。
 // GitHub公開等のオンライン専用機能はこのSWの対象外（フェッチはネットワークにそのまま委譲される）。
 
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const CACHE_NAME = `homepage-edit-${CACHE_VERSION}`;
 
 // ponytail: ビルドツールを持たないため、キャッシュ対象は手動列挙する。
@@ -55,9 +55,6 @@ const APP_SHELL = [
 
   "../sites/teate1122/site.json",
   "../sites/teate1122/pages/home.json",
-  "../sites/teate1122/pages/about.json",
-  "../sites/teate1122/pages/activities.json",
-  "../sites/teate1122/pages/contact.json",
   "../sites/teate1122/pages/privacy.json",
   "../sites/teate1122/assets/hero.svg",
 ];

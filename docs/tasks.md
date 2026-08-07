@@ -30,8 +30,8 @@
 | T-016 | core/renderのパリティ修正（ヘッダー/ナビ・フッター・OGP/favicon・Netlify Forms対応・Webフォント読み込み） | 高 | 完了 | developer/reviewer | Reviewer承認済み（推奨事項2件: og:image/og:urlの絶対URL化はT-017でベースURL解決とセットで対応）。Manager側でPlaywright視覚確認済み（ヘッダー/ナビ/フッター/フォーム表示、既存編集機能に影響なし） |
 | T-017 | teate1122リポジトリのビルド方式移行（Astro→ビルド不要の静的サイト、legacy-astro/退避、builder-previewブランチでの確認、サイトのベースURL解決とog:image/og:url絶対URL化） | 高 | 完了 | developer/reviewer | Reviewer要修正1件（data: URIでog:imageが壊れる）を修正済み承認。teate1122側はbuilder-previewブランチに退避・生成静的サイト配置・netlify.toml更新済み。Manager側で5ページ全て表示・OGP絶対URL出力を確認済み（main未変更） |
 | T-018 | 「更新」ボタンによるGitHub直接公開機能（Git Data API・PAT管理・確認シート・進捗表示） | 高 | 未着手 | developer | D-010参照。T-017完了後に着手 |
-| T-019 | contact-socialセクションの要素個別化（お問い合わせフォームとSNSの視覚的分離、Instagram遷移ボタンの独立） | 高 | 実装中 | developer | User指摘。「SNS」という見出しがお問い合わせフォームと同化して見える |
-| T-020 | トップページへのコンテンツ集約（プロフィール/活動等を別ページからトップページのセクションへ統合、ハンバーガーメニューは各セクションへのアンカー遷移に変更） | 高 | 計画中 | planner | User指摘。現状の複数ページ構成だとトップページの情報量が薄く訪問者に伝わらない |
+| T-019 | contact-socialセクションの要素個別化（お問い合わせフォームとSNSの視覚的分離、Instagram遷移ボタンの独立） | 高 | 完了 | developer/reviewer | User指摘対応（コミット6af2439）。Reviewer承認済み（必須修正なし、軽微な既存踏襲事項のみ） |
+| T-020 | トップページへのコンテンツ集約（プロフィール/活動等を別ページからトップページのセクションへ統合、ハンバーガーメニューは各セクションへのアンカー遷移に変更） | 高 | レビュー中 | developer/reviewer | Planner計画に基づき実装完了（D-011参照）。home.jsonを12セクションに再編し、about/activities/contact.jsonを削除。nav.itemsにhref方式を追加。build確認済み（index.html/privacy.htmlのみ生成、workshop-past非表示）。Reviewer承認待ち |
 
 ## バックログ（未着手・優先度未確定）
 - T-013 (P2想定・一部T-018へ吸収): 複数ページ管理UI（ページ切替導線）・ギャラリー・アニメーション・ダークモード

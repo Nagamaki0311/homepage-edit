@@ -27,7 +27,7 @@ function renderSection(section, ctx) {
   const bg = style.bg || { type: "none", value: "" };
   const inner = def.render(section.props || {}, ctx);
 
-  return html`<section class="section" data-type="${esc(section.type)}" data-section-id="${esc(section.id)}" data-padding-y="${esc(style.paddingY || "lg")}" data-align="${esc(style.align || "left")}" data-bg-type="${esc(bg.type || "none")}" data-bg-value="${esc(bg.value || "")}">
+  return html`<section id="${esc(section.id)}" class="section" data-type="${esc(section.type)}" data-section-id="${esc(section.id)}" data-padding-y="${esc(style.paddingY || "lg")}" data-align="${esc(style.align || "left")}" data-bg-type="${esc(bg.type || "none")}" data-bg-value="${esc(bg.value || "")}">
   <div class="section__inner">
     ${inner}
   </div>

@@ -88,9 +88,11 @@
               "type": "array",
               "items": {
                 "type": "object",
-                "required": ["pageId", "label"],
+                "required": ["label"],
+                "anyOf": [{ "required": ["pageId"] }, { "required": ["href"] }],
                 "properties": {
                   "pageId": { "type": "string" },
+                  "href": { "type": "string", "description": "T-013の複数ページ管理UIが無くとも、トップページ内アンカー（#section等）や外部/固定パスへ直接リンクするための指定。pageIdより優先される。" },
                   "label": { "type": "string" },
                   "visible": { "type": "boolean" }
                 }

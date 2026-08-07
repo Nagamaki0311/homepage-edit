@@ -44,12 +44,17 @@ function renderWebfontLinks(theme) {
 <link rel="stylesheet" href="${href}">`;
 }
 
-/** site.nav.items（pageId参照）を、pagesにより解決したhref付きリンクへ変換する。 */
+/** site.nav.items（pageId参照、またはhref直接指定）を、リンクへ変換する。 */
 function renderNavLinks(site, page, pages) {
   const items = site?.nav?.items || [];
   return items
     .filter((item) => item.visible !== false)
     .map((item) => {
+      if (item.href) {
+        const isAnchor = item.href.startsWith("#");
+        const current = !isAnchor && item.href === page?.slug ? ' aria-current="page"' : "";
+        return `<a href="${esc(resolveUrl(item.href))}"${current}>${esc(item.label)}</a>`;
+      }
       const target = pages?.[item.pageId];
       if (!target) return "";
       const current = page?.id === item.pageId ? ' aria-current="page"' : "";
