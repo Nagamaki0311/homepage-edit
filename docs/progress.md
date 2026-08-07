@@ -19,6 +19,53 @@
 
 ---
 
+## 2026-08-07 T-018: 「更新」ボタンによるGitHub直接公開機能
+
+### 実施内容
+- D-010で確定した設計に基づき、以下を実装（Plannerフェーズは省略、直接実装）。
+  - `editor/publish/build-files.js`: `editor/media/zip.js`の`exportSiteAsZip`内にあったファイル組み立てロジック（assets解決・data URL→バイナリ変換・各ページのHTML/CSS/JSON生成）を`buildSiteFiles(state, { assetBase, dataPrefix })`として抽出。`dataPrefix`を引数化し、ZIP出力（`sites-data/`、既存互換を維持）とGitHub直接公開（`site-data/`、teate1122の実ディレクトリ名に一致）の両方から共有利用できるようにした。`exportSiteAsZip`はこの関数を呼ぶだけに簡素化。
+  - `editor/publish/github.js`: GitHub Git Data APIクライアント（fetch経由、`Authorization: token <PAT>`）。`getRef`/`getCommit`/`createBlob`/`createTree`/`createCommit`/`updateRef`と、これらをまとめて単一コミットとしてpushする`publishFiles()`を実装。
+  - `editor/publish/token-store.js`: PATのIndexedDB保存・読み出し・削除（`homepage-edit-publish`という別DBを新設、既存の`homepage-edit`DBとは分離）、保存前の同意チェックボックス付き入力フォーム（`renderTokenPrompt`）、末尾4文字のみのマスク表示（`maskToken`）。
+  - `editor/ui/sheets/publish-sheet.js`: 「更新」ボタン押下時のフロー全体（`document.body`直下のオーバーレイ）を実装。PAT未設定・削除後は入力/同意画面→`sites/<id>/publish.json`から公開先を読み込み→変更ファイル一覧の確認シート→`publishFiles`呼び出し（進捗テキストを都度更新）→成功/失敗表示、をひとつのモジュールで完結させた。
+  - `editor/index.html`: `.app__actions`に`export-zip-btn`の隣へ「更新」ボタン（`#publish-btn`）を追加。プレビュー`<iframe id="preview">`に`sandbox="allow-same-origin"`を追加（多層防御。`core/render`は現状`<script>`/`<form>`を出力しないため`allow-scripts`/`allow-forms`は付与せず、`editor/ui/canvas.js`が必要とする`contentDocument`アクセス用の`allow-same-origin`のみとした）。
+  - `editor/app/main.js`: 「更新」ボタンのクリックハンドラで`openPublishFlow({ store, siteId, assetBase })`を呼ぶよう配線。
+  - `sites/teate1122/publish.json`を新設し、`{"owner": "Nagamaki0311", "repo": "teate1122", "branch": "claude/teate1122-homepage-9jsx1l"}`を設定（Userの依頼にある注意事項通り、mainではなくこのブランチを対象とした。owner/repo/branchはハードコードせずここから読む設計）。
+  - `editor/style.css`にオーバーレイ・PAT入力フォーム・確認シートのスタイルを追加。
+
+### エラーハンドリングの実装方針
+- `github.js`内で401/403を`PublishAuthError`、409/422（非fast-forward）を`PublishConflictError`、fetch例外・5xxを`PublishNetworkError`としてクラス分けし、`publish-sheet.js`側でそれぞれ異なるUI（認証エラー→トークン再入力導線、競合→「再取得して再試行」/「中断」の選択、ネットワークエラー→リトライ後失敗のメッセージと手動再試行ボタン）を出し分けた。
+- ネットワークエラーのみ`withRetry()`で指数バックオフ（500ms/1000ms/2000ms、最大3回）の自動リトライを行い、認証・競合エラーは即座に呼び出し元へ伝播させる（自動リトライで隠蔽しない）。
+- 409/422を検知した場合もforce pushは行わず（`updateRef`は常に`force: false`）、ユーザーが「再取得して再試行」を選んだ場合のみ`getRef`から再実行する設計とした。
+
+### PAT保存のセキュリティ上の注意点
+- IndexedDBは`homepage-edit-publish`という専用DBに分離し、既存のサイトデータ用DB（`homepage-edit`）とは独立させた（削除・スコープの混同を避けるため）。
+- 保存する場合のみ同意チェックボックスを必須化し、「保存しない（毎回入力）」を選べば`storeToken`を一切呼ばない設計にした。
+- 画面表示は常に`maskToken()`で末尾4文字のみ（例: `••••••••1234`）とし、全体を表示する導線は設けていない。
+- 削除ボタン（「保存済みトークンを削除」）を入力フォームに常設し、いつでも`deleteStoredToken()`を呼べるようにした。
+- プレビューiframeへの`sandbox="allow-same-origin"`追加は、XSS等でPATがJS実行コンテキストに露出するリスクを下げるための多層防御であり、PAT自体の保護はIndexedDBの同一オリジン制約とfine-grained PATの権限限定（対象リポジトリ・Contents読み書きのみ）に依存する前提は変わらない。
+
+### 結果
+- `node --check`で全新規/変更ファイルの構文エラーなしを確認。
+- `github.js`の`getRef`/`createBlob`/`createTree`/`createCommit`/`updateRef`/`publishFiles`をNode上でモック`fetch`により手動テスト（スクリプトはスクラッチパッドに作成、リポジトリには含めない）。以下を確認済み。
+  - 正常系: blob→tree（`base_tree`に現在のtree shaを指定・変更ファイルのみ含む）→commit（`parents`に現在のcommit shaを指定）→ref更新（`force: false`）の順で呼ばれ、`commitSha`が返る。進捗コールバックが5ステップ分呼ばれる。
+  - 401 → `PublishAuthError`がthrowされる。
+  - 422（non-fast-forward）→ `PublishConflictError`がthrowされる。
+  - fetch例外が続く場合 → 4回（初回+リトライ3回）試行後に`PublishNetworkError`がthrowされる（バックオフ時間も概ね一致）。
+  - 503が2回続いた後200 → リトライにより最終的に成功する。
+  - `maskToken()`の末尾4文字マスクを確認。
+  - `buildSiteFiles()`が`dataPrefix: "site-data"`指定時に`site-data/site.json`・`site-data/pages/home.json`を出力することを確認（ZIP用の`sites-data/`と異なるプレフィックスに切り替え可能なことの確認）。
+- `createZip()`が引き続き正しく動作すること（`exportSiteAsZip`のリファクタ後もZIP出力の挙動が変わらないこと）を、`createZip`の直接呼び出しで確認。
+- 実際のGitHub pushは未実施（fine-grained PATが用意できないため、依頼のスコープ外）。次工程（Reviewerまたは今後のUser操作）で、実PATを用いた`sites/teate1122/publish.json`の対象ブランチへの実push確認が必要。
+
+### 次回開始位置
+- Reviewerによるレビュー（T-018）。特に以下を重点確認してほしい。
+  - `publish-sheet.js`のUIフロー（PAT未設定時の同意画面、確認シート、進捗表示、エラー時の導線）の妥当性。
+  - `sandbox="allow-same-origin"`のみでプレビューiframeの既存機能（`editor/ui/canvas.js`のセクションクリック選択）が壊れていないことのブラウザ実機確認（本タスクではNode上のユニットテスト相当のみで、実ブラウザでのiframe動作は未確認）。
+  - 実PAT取得後、`sites/teate1122/publish.json`の対象ブランチ（`claude/teate1122-homepage-9jsx1l`、mainではない）への実push動作確認。
+- レビュー承認後、バックログのT-018 v2候補（差分ファイルのみアップロード・公開履歴・ロールバック等）は別タスクとして起票する。
+
+---
+
 ## 2026-08-07 T-020: トップページへのコンテンツ集約（1ページサイト化）
 
 ### 実施内容

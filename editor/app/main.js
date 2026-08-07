@@ -8,6 +8,7 @@ import { mountCanvas, highlightSection } from "../ui/canvas.js";
 import { renderPropsPanel } from "../ui/panels/props-panel.js";
 import { renderThemePanel } from "../ui/panels/theme-panel.js";
 import { renderStructureSheet } from "../ui/sheets/structure-sheet.js";
+import { openPublishFlow } from "../ui/sheets/publish-sheet.js";
 import { exportSiteAsZip } from "../media/zip.js";
 
 const SITE_ID = "teate1122";
@@ -17,6 +18,7 @@ const statusEl = document.getElementById("status");
 const panelEl = document.getElementById("panel");
 const iframeEl = document.getElementById("preview");
 const exportBtn = document.getElementById("export-zip-btn");
+const publishBtn = document.getElementById("publish-btn");
 const undoBtn = document.getElementById("undo-btn");
 const redoBtn = document.getElementById("redo-btn");
 const tabButtons = document.querySelectorAll(".app__tabs button");
@@ -149,6 +151,10 @@ async function main() {
       exportBtn.disabled = false;
       exportBtn.textContent = "ZIPで書き出し";
     }
+  });
+
+  publishBtn.addEventListener("click", () => {
+    openPublishFlow({ store, siteId: SITE_ID, assetBase: ASSET_BASE });
   });
 
   renderActivePanel(store);
