@@ -19,6 +19,179 @@
 
 ---
 
+## 2026-08-07 T-018: 「更新」ボタンによるGitHub直接公開機能
+
+### 実施内容
+- D-010で確定した設計に基づき、以下を実装（Plannerフェーズは省略、直接実装）。
+  - `editor/publish/build-files.js`: `editor/media/zip.js`の`exportSiteAsZip`内にあったファイル組み立てロジック（assets解決・data URL→バイナリ変換・各ページのHTML/CSS/JSON生成）を`buildSiteFiles(state, { assetBase, dataPrefix })`として抽出。`dataPrefix`を引数化し、ZIP出力（`sites-data/`、既存互換を維持）とGitHub直接公開（`site-data/`、teate1122の実ディレクトリ名に一致）の両方から共有利用できるようにした。`exportSiteAsZip`はこの関数を呼ぶだけに簡素化。
+  - `editor/publish/github.js`: GitHub Git Data APIクライアント（fetch経由、`Authorization: token <PAT>`）。`getRef`/`getCommit`/`createBlob`/`createTree`/`createCommit`/`updateRef`と、これらをまとめて単一コミットとしてpushする`publishFiles()`を実装。
+  - `editor/publish/token-store.js`: PATのIndexedDB保存・読み出し・削除（`homepage-edit-publish`という別DBを新設、既存の`homepage-edit`DBとは分離）、保存前の同意チェックボックス付き入力フォーム（`renderTokenPrompt`）、末尾4文字のみのマスク表示（`maskToken`）。
+  - `editor/ui/sheets/publish-sheet.js`: 「更新」ボタン押下時のフロー全体（`document.body`直下のオーバーレイ）を実装。PAT未設定・削除後は入力/同意画面→`sites/<id>/publish.json`から公開先を読み込み→変更ファイル一覧の確認シート→`publishFiles`呼び出し（進捗テキストを都度更新）→成功/失敗表示、をひとつのモジュールで完結させた。
+  - `editor/index.html`: `.app__actions`に`export-zip-btn`の隣へ「更新」ボタン（`#publish-btn`）を追加。プレビュー`<iframe id="preview">`に`sandbox="allow-same-origin"`を追加（多層防御。`core/render`は現状`<script>`/`<form>`を出力しないため`allow-scripts`/`allow-forms`は付与せず、`editor/ui/canvas.js`が必要とする`contentDocument`アクセス用の`allow-same-origin`のみとした）。
+  - `editor/app/main.js`: 「更新」ボタンのクリックハンドラで`openPublishFlow({ store, siteId, assetBase })`を呼ぶよう配線。
+  - `sites/teate1122/publish.json`を新設し、`{"owner": "Nagamaki0311", "repo": "teate1122", "branch": "claude/teate1122-homepage-9jsx1l"}`を設定（Userの依頼にある注意事項通り、mainではなくこのブランチを対象とした。owner/repo/branchはハードコードせずここから読む設計）。
+  - `editor/style.css`にオーバーレイ・PAT入力フォーム・確認シートのスタイルを追加。
+
+### エラーハンドリングの実装方針
+- `github.js`内で401/403を`PublishAuthError`、409/422（非fast-forward）を`PublishConflictError`、fetch例外・5xxを`PublishNetworkError`としてクラス分けし、`publish-sheet.js`側でそれぞれ異なるUI（認証エラー→トークン再入力導線、競合→「再取得して再試行」/「中断」の選択、ネットワークエラー→リトライ後失敗のメッセージと手動再試行ボタン）を出し分けた。
+- ネットワークエラーのみ`withRetry()`で指数バックオフ（500ms/1000ms/2000ms、最大3回）の自動リトライを行い、認証・競合エラーは即座に呼び出し元へ伝播させる（自動リトライで隠蔽しない）。
+- 409/422を検知した場合もforce pushは行わず（`updateRef`は常に`force: false`）、ユーザーが「再取得して再試行」を選んだ場合のみ`getRef`から再実行する設計とした。
+
+### PAT保存のセキュリティ上の注意点
+- IndexedDBは`homepage-edit-publish`という専用DBに分離し、既存のサイトデータ用DB（`homepage-edit`）とは独立させた（削除・スコープの混同を避けるため）。
+- 保存する場合のみ同意チェックボックスを必須化し、「保存しない（毎回入力）」を選べば`storeToken`を一切呼ばない設計にした。
+- 画面表示は常に`maskToken()`で末尾4文字のみ（例: `••••••••1234`）とし、全体を表示する導線は設けていない。
+- 削除ボタン（「保存済みトークンを削除」）を入力フォームに常設し、いつでも`deleteStoredToken()`を呼べるようにした。
+- プレビューiframeへの`sandbox="allow-same-origin"`追加は、XSS等でPATがJS実行コンテキストに露出するリスクを下げるための多層防御であり、PAT自体の保護はIndexedDBの同一オリジン制約とfine-grained PATの権限限定（対象リポジトリ・Contents読み書きのみ）に依存する前提は変わらない。
+
+### 結果
+- `node --check`で全新規/変更ファイルの構文エラーなしを確認。
+- `github.js`の`getRef`/`createBlob`/`createTree`/`createCommit`/`updateRef`/`publishFiles`をNode上でモック`fetch`により手動テスト（スクリプトはスクラッチパッドに作成、リポジトリには含めない）。以下を確認済み。
+  - 正常系: blob→tree（`base_tree`に現在のtree shaを指定・変更ファイルのみ含む）→commit（`parents`に現在のcommit shaを指定）→ref更新（`force: false`）の順で呼ばれ、`commitSha`が返る。進捗コールバックが5ステップ分呼ばれる。
+  - 401 → `PublishAuthError`がthrowされる。
+  - 422（non-fast-forward）→ `PublishConflictError`がthrowされる。
+  - fetch例外が続く場合 → 4回（初回+リトライ3回）試行後に`PublishNetworkError`がthrowされる（バックオフ時間も概ね一致）。
+  - 503が2回続いた後200 → リトライにより最終的に成功する。
+  - `maskToken()`の末尾4文字マスクを確認。
+  - `buildSiteFiles()`が`dataPrefix: "site-data"`指定時に`site-data/site.json`・`site-data/pages/home.json`を出力することを確認（ZIP用の`sites-data/`と異なるプレフィックスに切り替え可能なことの確認）。
+- `createZip()`が引き続き正しく動作すること（`exportSiteAsZip`のリファクタ後もZIP出力の挙動が変わらないこと）を、`createZip`の直接呼び出しで確認。
+- 実際のGitHub pushは未実施（fine-grained PATが用意できないため、依頼のスコープ外）。次工程（Reviewerまたは今後のUser操作）で、実PATを用いた`sites/teate1122/publish.json`の対象ブランチへの実push確認が必要。
+
+### 次回開始位置
+- Reviewerによるレビュー（T-018）。特に以下を重点確認してほしい。
+  - `publish-sheet.js`のUIフロー（PAT未設定時の同意画面、確認シート、進捗表示、エラー時の導線）の妥当性。
+  - `sandbox="allow-same-origin"`のみでプレビューiframeの既存機能（`editor/ui/canvas.js`のセクションクリック選択）が壊れていないことのブラウザ実機確認（本タスクではNode上のユニットテスト相当のみで、実ブラウザでのiframe動作は未確認）。
+  - 実PAT取得後、`sites/teate1122/publish.json`の対象ブランチ（`claude/teate1122-homepage-9jsx1l`、mainではない）への実push動作確認。
+- レビュー承認後、バックログのT-018 v2候補（差分ファイルのみアップロード・公開履歴・ロールバック等）は別タスクとして起票する。
+
+---
+
+## 2026-08-07 T-020: トップページへのコンテンツ集約（1ページサイト化）
+
+### 実施内容
+- `core/render/render-page.js`の`renderSection`で`<section>`に`id="${esc(section.id)}"`を追加（アンカーリンク先として利用。`data-section-id`属性は既存UI互換のため維持）。
+- `core/render/render-site.js`の`renderNavLinks`に、`item.href`が指定されている場合は`resolveUrl(item.href)`をそのまま使う分岐を追加（pageId経由の既存ロジックは維持）。`aria-current="page"`は`href`が`#`始まりでなく、かつ現在ページの`slug`と完全一致する場合のみ付与。
+- `core/schema/site.schema.json`の`nav.items`を`required: ["label"]`＋`anyOf`（`pageId`または`href`のいずれか必須）に変更し、`href`プロパティ（文字列）を追加。
+- `sites/teate1122/pages/home.json`を、旧`about.json`/`activities.json`/`contact.json`/旧`home.json`の内容を統合した12セクション構成（`hero`/`profile`/`philosophy`/`activities`/`candle-making`/`events`/`events-upcoming`/`events-past`/`workshop`/`workshop-upcoming`/`workshop-past`（`visible: false`）/`contact`）に再編。`hero`のCTAリンクは`#activities`に変更。`philosophy`は旧about.jsonの長文版を採用（旧home.jsonの短い理念文は不採用）。`contact`はT-019で見出しを空文字にした最新のcontact-social構造を踏襲し、フォームは1つに統合。
+- `sites/teate1122/site.json`の`pages`を`["home", "privacy"]`に変更、`nav.items`を`href`方式（`/#profile`, `/#activities`, `/#contact`）に変更。
+- `sites/teate1122/pages/about.json`・`activities.json`・`contact.json`を削除。
+- `tools/import-teate1122.js`冒頭に、T-020以降は再実行しない旨の注意コメントを追加（再実行すると5ページ構成に戻ってしまうため）。
+- 計画外だが必要な追加修正: `editor/sw.js`のPWAプリキャッシュ対象リスト（`APP_SHELL`）が削除済みの`about.json`/`activities.json`/`contact.json`を参照したままだと`cache.addAll`が例外を投げてapp shell全体のプリキャッシュが失敗する（`install`ハンドラで例外はcatchされ握りつぶされるため気づきにくい）ため、当該3エントリを削除し`CACHE_VERSION`を`v1`→`v2`に更新した。
+
+### 結果
+- `node build/build.js --site teate1122`で`dist/`に`index.html`・`privacy.html`・`style.css`・`assets/`のみが生成され、`about.html`/`activities.html`/`contact.html`は生成されないことを確認。
+- `dist/index.html`に`id="hero"`/`id="profile"`/`id="philosophy"`/`id="activities"`/`id="candle-making"`/`id="events"`/`id="events-upcoming"`/`id="events-past"`/`id="workshop"`/`id="workshop-upcoming"`/`id="contact"`が存在し、`id="workshop-past"`（`visible: false`）は含まれないことを確認。
+- ヘッダーナビが`<a href="/#profile">`/`<a href="/#activities">`/`<a href="/#contact">`になっていることを確認。
+- `core/schema/validate.js`の`validateSite`/`validatePage`で`site.json`/`home.json`がともに`valid: true`であることを確認。
+
+### 次回開始位置
+- Reviewerによるレビュー（T-020）。承認後、Manager側でPlaywright等による実ブラウザでのアンカー遷移・ナビ表示の視覚確認を行う。
+- レビュー承認後、T-018（「更新」ボタンによるGitHub直接公開機能）に着手予定。
+
+---
+
+## 2026-08-04 T-017: teate1122ビルド方式移行・OGP絶対URL化
+
+### 実施内容
+- homepage-edit側: `core/schema/site.schema.json`に`site.site.baseUrl`（任意）を追加、`core/render/render-site.js`で`baseUrl`設定時に`og:image`・`og:url`を絶対URL化（未設定時は従来通り相対パス、後方互換維持）。`tools/import-teate1122.js`を修正し`astro.config.mjs`の`site:`フィールドから`baseUrl`を自動設定。
+- Reviewerが「`resolveAssetUrl()`が返す`data:`URIがbaseUrl付与で壊れる」問題を指摘、`toAbsoluteUrl()`の絶対URL判定を`/^(https?:|data:)/i`に拡張して解消（コミット`0a4d04f`）。
+- teate1122側: `builder-preview`ブランチ（`main`は無変更）で、Astroソース一式（`src/`, `astro.config.mjs`, `package.json`等）を`legacy-astro/`へ`git mv`退避。ビルダー生成の静的サイト（5ページHTML・`style.css`・`assets/`）をルート直下に配置し、`site-data/`にJSONソースも配置。`netlify.toml`の`command`（Astroビルド）を削除し`publish = "."`に変更（既存3件のリダイレクトは維持）。favicon.svgをルートに配置。
+
+### 結果
+- `node build/build.js --site teate1122`で`dist/*.html`の`og:image`・`og:url`が`https://teate1122.netlify.app/...`の絶対URLで出力されることを確認。
+- Manager側でteate1122の`builder-preview`ブランチをローカルサーバーで配信し、5ページ全て200、ヘッダー/ナビ・フッター・お問い合わせフォーム・OGP絶対URLタグ・favicon・リダイレクト設定を確認済み。コンソールエラーなし。
+- 完了条件を満たしたためT-017を完了とした。`main`ブランチは無変更のまま。
+
+### 次回開始位置
+- `builder-preview`ブランチをGitHubへpushし、Netlifyのブランチデプロイ機能で実際のURLでの表示確認を行う（User確認が必要）。
+- パリティ確認後、`main`への切り替えを検討する（User承認が必要）。
+- 次はT-018（「更新」ボタンによるGitHub直接公開機能）に着手する。
+
+---
+
+## 2026-08-04 T-016: core/renderのパリティ修正（ヘッダー/ナビ・フッター・OGP/favicon・Netlify Forms・Webフォント）
+
+### 実施内容
+- `core/render/render-site.js`にグローバルヘッダー（サイト名リンク＋`site.nav.items`から生成するナビゲーション、現在ページに`aria-current="page"`）とフッター（`site.social`のSNSリンク＋コピーライト）を追加。`renderSite`に新オプション`options.pages`（pageId→pages/*.jsonのマップ）を追加し、他ページのslugをナビゲーション解決に使用。呼び出し元3箇所（`build/build.js`・`editor/ui/canvas.js`・`editor/media/zip.js`）を更新し、既にstore/build側で保持している全ページのマップを渡すよう修正。
+- `<head>`にOGP（`og:type`/`og:title`/`og:description`/`og:image`）とfavicon（`<link rel="icon">`）を追加。`og:image`は`site.site.meta.ogImage`がアセットIDの場合`core/render/assets.js`の`resolveAssetUrl`で解決。faviconは新設した任意フィールド`site.site.meta.favicon`（`core/schema/site.schema.json`に追加）を使い、未設定時は固定値`/favicon.svg`にフォールバック。
+- `core/sections/contact-social/render.js`に`site.json`の`contact.formProvider === "netlify"`の場合のみ出力するNetlify Forms用フォーム（hidden `form-name`・honeypot・name/email/message・送信ボタン）を追加。表示可否を新規プロパティ`showForm`（既定true）で制御できるようにし`define.js`にフィールド追加。フォーム内は固定リテラルのみでユーザー入力を含まないため`esc()`は不要（見出し・本文など既存の可変値は引き続き`esc()`/`resolveUrl()`を通す）。
+- Webフォント読み込みはGoogle Fonts CDN経由の`<link>`をオプション実装。`theme.tokens.font.heading`/`body`が既知のfont id（`zen-old-mincho`/`noto-sans-jp`）に一致する場合のみ`<link rel="preconnect">`+スタイルシートを出力し、未知のidでは何も出力しない（フォールバックのシステムフォントスタックは`tokens-to-css.js`に既存）。CDN依存の理由をコード内コメントに明記。
+- ヘッダー/フッターのCSSは`core/render/render-site.js`内に`CHROME_CSS`として定義し`renderThemeCss()`で結合（セクション横断の共通chromeのため、個別セクションのCSSファイルとは別扱い）。
+
+### 結果
+- `node build/build.js --site teate1122`で5ページとも正常生成。`grep`で`dist/*.html`に`site-header`/`site-footer`/`aria-current="page"`/`og:image`/`rel="icon"`/`fonts.googleapis.com`/`data-netlify="true"`が期待通り含まれることを確認。
+- Playwrightでエディタのプレビューiframeを確認。ヘッダー（サイト名+ナビ）、Netlify Formsフォーム、フッター（SNSリンク+コピーライト`© 2026 teate1122`）がプレビューに反映されることを視覚確認。
+
+### 次回開始位置
+- Reviewerによるレビュー（T-016）。承認後、T-017（teate1122のAstro→ビルド不要の静的サイトへの移行）に着手。
+
+---
+
+## 2026-08-04 T-012 続き: レビュー修正（ZIPエクスポート例外の解消）
+
+### 実施内容
+- Reviewer1回目レビューで必須修正1件（`editor/media/zip.js`のZIPエクスポートが`home`以外の4ページで`page`が`undefined`となり`TypeError`）を指摘。原因は`editor/app/main.js`の`loadInitialState`が`home`ページのみロードしていたこと。
+- `loadInitialState`を、`site.json`の`pages`配列に列挙された全5ページを`Promise.all`で並列fetchし`state.pages`へ格納するよう修正（コミット`616f14e`、変更は`main.js`1ファイルのみ）。ページ切替UI自体はP2スコープのため今回は追加していない。
+- Reviewer最終レビューで承認。ZIPエクスポートが5ページ全て正しく含む形で例外なく動作することを確認。
+
+### 結果
+- Playwrightでエディタの「ZIPで書き出し」ボタンを実行し例外なし、ダウンロードしたZIPに`index/about/activities/contact/privacy.html`と対応する`sites-data/pages/*.json`が全て含まれることを確認。
+- Manager側で`node build/build.js --site teate1122`を再実行し、5ページ全て正常生成されることを確認。
+- Reviewerが非ブロッキングの改善点として「`zip.js`が全ページ書き出し時に`style.css`/`assets`を重複してZIPへ書き込む」ことを発見。機能上のブロッカーではないためバックログに追加し、完了条件（要件達成・エラーなし・動作確認済み・コードレビュー済み）を満たしたためT-012を完了とした。
+
+### 次回開始位置
+- T-013（P2想定: GitHub API直接公開・複数ページ管理UI・ギャラリー・アニメーション・ダークモード）は現時点では未着手。まずはP0〜P1-bまでの成果物を公開（Netlify等）し、実際に使える状態にすることを優先する。
+- バックログのzip.js重複書き込みは優先度低のため保留。
+
+---
+
+## 2026-08-04 T-012: ビジュアルサイトビルダー P1-b実装（並び替え・Undo/Redo・テーマプリセット・PWAオフライン・WebP最適化）
+
+### 実施内容
+- **並び替え（構成シート）**: `editor/ui/sheets/structure-sheet.js`を新規実装。セクション名の縦リストUIで、上下ボタン（確実な代替手段）とPointer Eventsによる短距離ドラッグ並び替えの両方に対応（SortableJs等の外部ライブラリは使わず自前実装）。表示/非表示切替・複製・削除も統合。`editor/index.html`に「構成」タブを追加。
+- **Undo/Redo**: `editor/app/history.js`を新規実装。JSON Patch風の`{op,path,value}`の逆パッチ対をスタックに積む方式。`store.setPath`/`store.setState`のメソッド自体を差し替えて変更を横取りする実装とした。テキスト入力等の連続変更は500msでコアレス（同一pathへの連続`setPath`のみ）。ヘッダーに「戻す」「やり直す」ボタンを追加。
+  - 実装中に、state変更の通知（`store`のlisteners）がundo/redoスタックへのpush前に発火し、ボタン活性状態の更新が1テンポ遅れるバグを発見。undo側の値を確定させてから`originalSetState`/`originalSetPath`を呼ぶ順序に修正して解消。
+- **テーマプリセット**: `core/theme/presets/`に`warm-sunset.json`（温かな夕焼け）・`cool-mono.json`（クールモノトーン）を追加（既存`quiet-mincho.json`と合わせて3種）。`editor/ui/panels/theme-panel.js`に「プリセットから選ぶ」ボタン一覧を追加し、タップで`site.theme`全体を一括置換できるようにした。
+- **PWAオフライン**: `editor/sw.js`をcache-first戦略に全面書き換え。`editor/`・`core/`・`sites/teate1122/`配下の静的ファイルを`CACHE_VERSION`付きキャッシュ名（`homepage-edit-v1`）でプリキャッシュし、`activate`時に旧バージョンのキャッシュを削除する。
+- **WebP最適化**: `editor/media/resize-webp.js`を新規実装。`createImageBitmap`+`canvas.toBlob('image/webp')`で480/960/1440px幅のWebPを生成し、`editor/media/import.js`のアップロードフローに統合（`site.assets[].srcset`として保存、`core/schema/site.schema.json`を軽微に拡張）。`core/render/assets.js`に`resolveSrcset`を追加し、`hero`/`image-text`のrender.jsで`srcset`属性を出力。Lazy Load対応として`image-text`の画像に`loading="lazy"`を追加（ヒーロー画像はファーストビュー想定のため付与しない）。`editor/media/zip.js`もsrcsetのdata URLをZIP内ファイルへ変換するよう拡張。
+- 一箇所、`main.js`の`store.subscribe`コールバックが「セクション」「構成」タブしか再描画しておらず、テーマプリセット適用後に色パネルの表示が更新されない不具合をPlaywright確認中に発見・修正（全タブ共通で`renderActivePanel(store)`を呼ぶよう統一）。
+
+### 結果
+- `node build/build.js --site teate1122`は変更後も正常終了（5ページ+style.css+assets生成）。
+- Playwrightでエディタを実操作し、以下を視覚確認済み（スクリーンショット取得済み）:
+  - 構成シートでの上下ボタン並び替え・Pointer Events短距離ドラッグ並び替え・表示切替・複製・削除
+  - Undo/Redo（並び替え・表示切替・複製・プリセット変更いずれも正しく戻る/やり直せる）
+  - テーマプリセット切替（色が即座に反映され、選択中プリセットのハイライトも同期）
+  - Service Worker登録・キャッシュ内49ファイル格納・オフライン（`context.setOffline(true)`）でのリロード後もアプリシェルとIndexedDB保存済みデータで編集画面が表示されることを確認
+  - 画像アップロード時にWebP srcset（480/960/1440px相当、生成した幅は元画像サイズに応じて調整）が生成され、プレビューiframe内`<img>`の`srcset`属性に反映されることを確認
+  - ZIPエクスポートがsrcset付きアセットを含めて正常に生成されることを確認（`exportSiteAsZip`を直接呼び出しての検証）
+
+### 次回開始位置
+- 既知の積み残し（P1-bのスコープ外、既存のP0/P1-a由来のギャップ）: `editor/app/main.js`の`loadInitialState`が`home`ページのみを読み込む一方、`site.json`の`pages`配列は5ページ列挙されているため、エディタのZIPエクスポートボタンをそのまま押すと`state.pages[pageId]`が`undefined`になり例外が発生する（複数ページ編集UI自体が未実装のため）。複数ページ切替UIはP1-b承認スコープに含まれておらず、P2/P3のバックログ（複数ページ管理）で対応する想定。
+- T-011の積み残し（お問い合わせフォームセクション種別、ギャラリー画像、プライバシーポリシー内リンク）も引き続き未着手。
+- 次はレビュー依頼（Reviewer）へ。
+
+---
+
+## 2026-08-04 T-011: teate1122インポートスクリプトの実装
+
+### 実施内容
+- `/home/user/teate1122`の実コンテンツ（`src/pages/*.astro`, `src/data/social.ts`, `src/content/events/*.md`, `src/styles/global.css`）を読み取り、ビルダーのスキーマに変換する`tools/import-teate1122.js`を新規実装（teate1122専用の1回限りのスクリプトとし、汎用Astroパーサー化はしない方針。Ponytail/YAGNI）。
+- `sites/teate1122/`のダミーデータを実データに置き換え。`site.json`にteate1122の実テーマ色・SNS・5ページ構成を反映し、`pages/home.json`に加えて`about.json`・`activities.json`・`contact.json`・`privacy.json`を新規生成。
+- `build/build.js`は既に`site.pages`をループする複数ページ出力に対応済みだったため変更不要と確認。
+- Reviewerが1回目レビューで承認（必須修正なし）。軽微な推奨指摘（イベントの開催予定/過去の区別・日付ソートが失われている）を受け、`buildActivitiesPage`に`activities.astro`と同じ分類・ソートロジックを追加し、activity-cardsセクションを開催予定/過去で分割する形に修正（コミット`c1d8f43`）。
+
+### 結果
+- `node tools/import-teate1122.js --src /home/user/teate1122`実行後、`core/schema/validate.js`でsite.json+5ページ全てが`valid: true`。
+- `node build/build.js --site teate1122`で`dist/`に5ページ分のHTML（index/about/activities/contact/privacy）+style.css+assetsを生成。Manager側で実データ反映（「心をほどく、灯りのある暮らし」「秋の手作り市 出店」等）を`grep`で確認し、イベント順序（秋の手作り市→春の暮らしフェア→キャンドル手作りワークショップ＝開催予定→過去の順）も正しいことを確認。
+- 完了条件（要件達成・エラーなし・動作確認済み・コードレビュー済み）を満たしたためT-011を完了とした。
+
+### 次回開始位置
+- 積み残し（Developer/Reviewer報告より）: お問い合わせフォーム（name/email/message）に対応するセクション種別が現状なくテキスト要約に簡略化、ギャラリー画像は未反映（プレースホルダーのまま）、プライバシーポリシー内リンクがテキスト化時に失われる。これらは新セクション追加を伴うためP1-b以降で検討。
+- 次はT-012（P1-b: 並び替え・Undo/Redo・テーマプリセット切替UI・PWAオフライン・WebP最適化）に着手する。
+
+---
+
 ## 2026-08-04 T-010: ビジュアルサイトビルダー P0（MVP）実装
 
 ### 実施内容

@@ -23,13 +23,27 @@
 | T-007 | Agent別モデル最適化（Model Routing）の導入 | 中 | 完了 | claude | Planner=opus/Developer・Reviewer=sonnetに固定。軽量レビューはAgent呼び出し時のmodelパラメータ上書きで対応（D-007参照） |
 | T-008 | ビジュアルサイトビルダー: 設計フェーズ（アーキテクチャ・データ構造・ディレクトリ・UI/UX・技術選定・段階的スコープ） | 高 | 完了 | planner | Planner提案をUser承認（D-009参照）。以降はP0〜P3のフェーズ別タスク（T-010以降）で実装管理する |
 | T-010 | ビジュアルサイトビルダー P0（MVP）: スキーマ・core/render・基本セクション種別・基本編集・自動保存・プレビュー・ZIPエクスポート・Node CLI | 高 | 完了 | developer/reviewer | セキュリティ2件（href/URLのXSS対策、theme色のCSSインジェクション対策）Reviewer承認済み。cssHref空文字列バグも修正済み。Manager側でPlaywrightによりプレビュー正常表示・セクション選択・プロパティパネル表示を視覚確認済み |
+| T-011 | ビジュアルサイトビルダー P1-a: teate1122インポートスクリプト（Astroソース→サイトビルダーJSON変換） | 高 | 完了 | developer/reviewer | tools/import-teate1122.jsを新規実装。Reviewer承認済み（軽微指摘のイベント開催予定/過去の分類・ソートも追加修正済み）。Manager側で5ページ全てのビルド・バリデーション・実データ反映を確認済み |
+
+| T-012 | ビジュアルサイトビルダー P1-b: 並び替え（構成シート）・Undo/Redo・テーマプリセット切替UI・PWAオフライン・WebP最適化 | 高 | 完了 | developer/reviewer | 必須修正（ZIPエクスポート例外）対応済み、Reviewer承認。Manager側でビルド確認済み |
+| T-015 | Netlify公開設定の追加・本番デプロイ確認 | 高 | 完了 | claude | netlify.toml追加（publish=リポジトリルート、/を/editor/へリダイレクト）。本番URL https://edit-teate.netlify.app/editor/ で構造確認済み（リダイレクト・core/sitesへの相対パス解決・PWAファイル、いずれも200） |
+| T-016 | core/renderのパリティ修正（ヘッダー/ナビ・フッター・OGP/favicon・Netlify Forms対応・Webフォント読み込み） | 高 | 完了 | developer/reviewer | Reviewer承認済み（推奨事項2件: og:image/og:urlの絶対URL化はT-017でベースURL解決とセットで対応）。Manager側でPlaywright視覚確認済み（ヘッダー/ナビ/フッター/フォーム表示、既存編集機能に影響なし） |
+| T-017 | teate1122リポジトリのビルド方式移行（Astro→ビルド不要の静的サイト、legacy-astro/退避、builder-previewブランチでの確認、サイトのベースURL解決とog:image/og:url絶対URL化） | 高 | 完了 | developer/reviewer | Reviewer要修正1件（data: URIでog:imageが壊れる）を修正済み承認。teate1122側はbuilder-previewブランチに退避・生成静的サイト配置・netlify.toml更新済み。Manager側で5ページ全て表示・OGP絶対URL出力を確認済み（main未変更） |
+| T-018 | 「更新」ボタンによるGitHub直接公開機能（Git Data API・PAT管理・確認シート・進捗表示） | 高 | 完了 | developer/reviewer | D-010参照。Reviewer承認済み（セキュリティ観点含め必須修正なし。軽微指摘1件はバックログへ）。実際のPATを用いた初回push動作確認はUser操作が必要（バックログ参照） |
+| T-019 | contact-socialセクションの要素個別化（お問い合わせフォームとSNSの視覚的分離、Instagram遷移ボタンの独立） | 高 | 完了 | developer/reviewer | User指摘対応（コミット6af2439）。Reviewer承認済み（必須修正なし、軽微な既存踏襲事項のみ） |
+| T-020 | トップページへのコンテンツ集約（プロフィール/活動等を別ページからトップページのセクションへ統合、ハンバーガーメニューは各セクションへのアンカー遷移に変更） | 高 | 完了 | developer/reviewer | Planner計画に基づき実装（D-011参照）。home.jsonを12セクションに再編し、about/activities/contact.jsonを削除。nav.itemsにhref方式を追加。build確認済み（index.html/privacy.htmlのみ生成、workshop-past非表示）。Reviewer承認済み（軽微指摘4件、必須修正なし。バックログ参照） |
 
 ## バックログ（未着手・優先度未確定）
-
-- T-011 (P1想定): 並び替え・Undo/Redo・テーマプリセット・PWAオフライン・WebP最適化、teate1122インポートスクリプト（D-009によりP3から前倒し）
-- T-012 (P2想定): GitHub API直接公開（PAT認証・差分確認画面）・複数ページ・ギャラリー・アニメーション・ダークモード
-- T-013 (P3想定): 複数サイト管理UI・テンプレート7種・SEO/OGP詳細
+- T-013 (P2想定・一部T-018へ吸収): 複数ページ管理UI（ページ切替導線）・ギャラリー・アニメーション・ダークモード
+- T-014 (P3想定): 複数サイト管理UI・テンプレート7種・SEO/OGP詳細
+- T-018のv2候補: 差分ファイルのみアップロード・Netlify Deploy APIでの公開完了確認・差分プレビュー・公開履歴とロールバック（D-010参照）
+- 画像アセット（data URL）のコミット肥大化に対する上限警告は未実装（D-010参照、優先度未確定）
+- editor/media/zip.jsが全ページ書き出し時にstyle.css/assetsを重複してZIPに書き込む（T-012レビューで発見、非ブロッキング。優先度低）
 - progress.mdが将来肥大化した場合、docs/progress-archive.md等への分割を検討する（D-006時点では未実施・優先度未確定）
+- T-020レビュー指摘（優先度低、非ブロッキング）: `render-site.js`の`isAnchor = item.href.startsWith("#")`が実データ（`/#profile`等）では常にfalseになる死んだ分岐。aria-current非付与は別ロジックで結果的に成立しているため実害なし。`href.includes("#")`への修正、またはコメント整合を推奨
+- T-020レビュー指摘: `editor/app/main.js`の`loadInitialState`がIndexedDBキャッシュを無条件優先するため、過去にeditorを開いたブラウザで旧5ページ構成のstale状態が復元され続ける懸念。公開サイト自体には無関係だが、editor利用者が気づかず古い状態を編集・エクスポートするリスクがあるため、バージョンキー等での無効化を将来検討する
+- T-018レビュー指摘（優先度低、非ブロッキング）: `build-files.js`は現存アセットのみ列挙するため、エディタ上で削除した画像等がGitHub側に残り続ける（`base_tree`経由）。差分検知・削除はD-010でv2以降と明記済みのため許容範囲
+- T-018フォローアップ（User操作が必要）: 実際のfine-grained PATを用いた初回push動作確認（teate1122リポジトリへの実コミット・ref更新）が未実施。次回User操作時に確認する
 
 ## メモ
 

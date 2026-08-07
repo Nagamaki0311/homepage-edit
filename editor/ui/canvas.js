@@ -16,7 +16,7 @@ export function mountCanvas(iframeEl, store, { assetBase, onSelectSection }) {
   function render() {
     const { site, pages, currentPageId } = store.getState();
     const page = pages[currentPageId];
-    const { html, css } = renderSite(site, page, { assetBase, cssHref: "" });
+    const { html, css } = renderSite(site, page, { assetBase, cssHref: "", pages });
     const withInlineCss = html.replace(
       '<link rel="stylesheet" href="">',
       `<style>${css}</style><style>

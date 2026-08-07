@@ -1,0 +1,12 @@
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/"
+  to = "/editor/"
+  status = 302
+
+[[headers]]
+  for = "/editor/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"

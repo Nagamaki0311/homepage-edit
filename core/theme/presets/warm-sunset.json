@@ -1,0 +1,17 @@
+{
+  "preset": "warm-sunset",
+  "tokens": {
+    "color": {
+      "bg": "#fff8f0",
+      "surface": "#fbe8d3",
+      "text": "#3a2317",
+      "textMuted": "#8a6a52",
+      "accent": "#d97b4b",
+      "border": "#f0cfa8"
+    },
+    "font": { "heading": "zen-old-mincho", "body": "noto-sans-jp", "scale": 1.0 },
+    "space": { "sectionY": "lg", "gap": "md" },
+    "button": { "shape": "round", "fill": "solid" },
+    "animation": { "preset": "fade-up", "duration": 500 }
+  }
+}

@@ -2,10 +2,13 @@
 // エディタのエントリポイント。store/autosave/canvas/panelsを配線する。
 
 import { createStore } from "./store.js";
+import { attachHistory } from "./history.js";
 import { attachAutosave, loadSite } from "./autosave.js";
 import { mountCanvas, highlightSection } from "../ui/canvas.js";
 import { renderPropsPanel } from "../ui/panels/props-panel.js";
 import { renderThemePanel } from "../ui/panels/theme-panel.js";
+import { renderStructureSheet } from "../ui/sheets/structure-sheet.js";
+import { openPublishFlow } from "../ui/sheets/publish-sheet.js";
 import { exportSiteAsZip } from "../media/zip.js";
 
 const SITE_ID = "teate1122";
@@ -15,6 +18,9 @@ const statusEl = document.getElementById("status");
 const panelEl = document.getElementById("panel");
 const iframeEl = document.getElementById("preview");
 const exportBtn = document.getElementById("export-zip-btn");
+const publishBtn = document.getElementById("publish-btn");
+const undoBtn = document.getElementById("undo-btn");
+const redoBtn = document.getElementById("redo-btn");
 const tabButtons = document.querySelectorAll(".app__tabs button");
 
 let activeTab = "sections";
@@ -24,11 +30,16 @@ async function loadInitialState() {
   const cached = await loadSite(SITE_ID);
   if (cached) return cached;
 
-  const [site, home] = await Promise.all([
-    fetch(`../sites/${SITE_ID}/site.json`).then((r) => r.json()),
-    fetch(`../sites/${SITE_ID}/pages/home.json`).then((r) => r.json()),
-  ]);
-  return { site, pages: { home }, currentPageId: "home" };
+  const site = await fetch(`../sites/${SITE_ID}/site.json`).then((r) => r.json());
+  const pageEntries = await Promise.all(
+    site.pages.map((pageId) =>
+      fetch(`../sites/${SITE_ID}/pages/${pageId}.json`)
+        .then((r) => r.json())
+        .then((page) => [pageId, page])
+    )
+  );
+  const pages = Object.fromEntries(pageEntries);
+  return { site, pages, currentPageId: "home" };
 }
 
 function renderSectionsTab(store) {
@@ -71,6 +82,14 @@ function renderSectionsTab(store) {
 function renderActivePanel(store) {
   if (activeTab === "sections") {
     renderSectionsTab(store);
+  } else if (activeTab === "structure") {
+    renderStructureSheet(panelEl, store, {
+      onSelect: (sectionId) => {
+        activeTab = "sections";
+        tabButtons.forEach((b) => b.classList.toggle("is-active", b.dataset.tab === "sections"));
+        selectSection(store, sectionId);
+      },
+    });
   } else {
     renderThemePanel(panelEl, store);
   }
@@ -86,11 +105,27 @@ async function main() {
   statusEl.textContent = "読み込み中...";
   const initialState = await loadInitialState();
   const store = createStore(initialState);
+  const history = attachHistory(store);
+
+  function updateHistoryButtons() {
+    undoBtn.disabled = !history.canUndo();
+    redoBtn.disabled = !history.canRedo();
+  }
+
+  undoBtn.addEventListener("click", () => {
+    history.undo();
+    updateHistoryButtons();
+  });
+  redoBtn.addEventListener("click", () => {
+    history.redo();
+    updateHistoryButtons();
+  });
 
   attachAutosave(store, SITE_ID);
   store.subscribe(() => {
     statusEl.textContent = "自動保存済み";
-    if (activeTab === "sections") renderSectionsTab(store);
+    updateHistoryButtons();
+    renderActivePanel(store);
   });
 
   mountCanvas(iframeEl, store, {
@@ -116,6 +151,10 @@ async function main() {
       exportBtn.disabled = false;
       exportBtn.textContent = "ZIPで書き出し";
     }
+  });
+
+  publishBtn.addEventListener("click", () => {
+    openPublishFlow({ store, siteId: SITE_ID, assetBase: ASSET_BASE });
   });
 
   renderActivePanel(store);

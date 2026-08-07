@@ -18,3 +18,21 @@ export function resolveAssetUrl(site, assetId, assetBase = "") {
   if (/^(data:|https?:)/.test(asset.file)) return asset.file;
   return `${assetBase}${asset.file}`;
 }
+
+function resolveOne(file, assetBase) {
+  if (/^(data:|https?:)/.test(file)) return file;
+  return `${assetBase}${file}`;
+}
+
+/**
+ * asset.srcset（[{width, file}]）を `<url> <width>w` 形式のsrcset属性値に変換する。
+ * srcsetを持たない、または空配列の場合は null を返す。
+ */
+export function resolveSrcset(site, assetId, assetBase = "") {
+  const asset = findAsset(site, assetId);
+  if (!asset || !Array.isArray(asset.srcset) || asset.srcset.length === 0) return null;
+  return asset.srcset
+    .filter((entry) => entry?.file && entry?.width)
+    .map((entry) => `${resolveOne(entry.file, assetBase)} ${entry.width}w`)
+    .join(", ");
+}

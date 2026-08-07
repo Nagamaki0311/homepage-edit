@@ -4,6 +4,7 @@
     "id": "teate1122",
     "name": "teate1122",
     "locale": "ja",
+    "baseUrl": "https://teate1122.netlify.app",
     "meta": {
       "title": "teate1122 | 心をほどく、灯りのある暮らし",
       "description": "teate1122は、日々の暮らしに寄り添う手作りキャンドルをお届けしています。",
@@ -21,20 +22,73 @@
         "accent": "#a8b5a2",
         "border": "#e6e0d7"
       },
-      "font": { "heading": "zen-old-mincho", "body": "noto-sans-jp", "scale": 1.0 },
-      "space": { "sectionY": "lg", "gap": "md" },
-      "button": { "shape": "square", "fill": "outline" },
-      "animation": { "preset": "fade-up", "duration": 600 }
+      "font": {
+        "heading": "zen-old-mincho",
+        "body": "noto-sans-jp",
+        "scale": 1
+      },
+      "space": {
+        "sectionY": "lg",
+        "gap": "md"
+      },
+      "button": {
+        "shape": "square",
+        "fill": "outline"
+      },
+      "animation": {
+        "preset": "fade-up",
+        "duration": 600
+      }
     }
   },
   "nav": {
     "auto": true,
-    "items": [{ "pageId": "home", "label": "トップ", "visible": true }]
+    "items": [
+      {
+        "href": "/#profile",
+        "label": "プロフィール",
+        "visible": true
+      },
+      {
+        "href": "/#activities",
+        "label": "活動",
+        "visible": true
+      },
+      {
+        "href": "/#contact",
+        "label": "お問い合わせ",
+        "visible": true
+      }
+    ]
   },
   "social": [
-    { "platform": "instagram", "url": "https://www.instagram.com/teate1122", "handle": "@teate1122" }
+    {
+      "platform": "instagram",
+      "url": "https://www.instagram.com/teate1122",
+      "handle": "@teate1122"
+    }
   ],
-  "contact": { "email": "info@teate1122.example.com", "formProvider": "netlify" },
-  "pages": ["home"],
-  "assets": [{ "id": "a1", "file": "hero.svg", "w": 1440, "h": 1440, "alt": "ヒーロー画像準備中" }]
+  "contact": {
+    "formProvider": "netlify"
+  },
+  "pages": [
+    "home",
+    "privacy"
+  ],
+  "assets": [
+    {
+      "id": "a1",
+      "file": "hero.svg",
+      "w": 1440,
+      "h": 1440,
+      "alt": "ヒーロー画像準備中"
+    },
+    {
+      "id": "a2",
+      "file": "hero.svg",
+      "w": 1440,
+      "h": 1440,
+      "alt": "プロフィール写真準備中"
+    }
+  ]
 }

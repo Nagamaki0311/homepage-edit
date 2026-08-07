@@ -1,6 +1,31 @@
 /* core/sections/contact-social/style.css: render.js の css エクスポートと同一内容のドキュメント用ファイル */
 .contact-social__body { color: var(--color-text-muted); max-width: 34em; margin-inline: auto; }
-.contact-social__list { list-style: none; padding: 0; margin: 1.5rem 0 0; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-.contact-social__list a { color: var(--color-text); text-decoration: underline; text-underline-offset: 4px; }
+.contact-social__blocks { display: flex; flex-direction: column; gap: var(--space-y-sm); max-width: 34em; margin: var(--space-y-sm) auto 0; }
+.contact-social__block { text-align: center; }
+.contact-social__block + .contact-social__block { padding-top: var(--space-y-sm); border-top: 1px solid var(--color-border); }
+.contact-social__subheading { font-family: var(--font-heading); margin: 0 0 1rem; font-size: 1.1rem; }
+.contact-social__list { list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.contact-social__social-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.5rem;
+  border: 1px solid var(--color-text);
+  color: var(--color-text);
+  text-decoration: none;
+  background: transparent;
+  transition: background-color 0.2s, color 0.2s;
+}
+.contact-social__social-btn:hover { background: var(--color-text); color: var(--color-bg); }
+.contact-social__icon { flex-shrink: 0; }
+.contact-social__form { display: flex; flex-direction: column; gap: 1.25rem; text-align: left; }
+.contact-social__hp { position: absolute; left: -9999px; }
+.contact-social__field { display: flex; flex-direction: column; gap: 0.4rem; }
+.contact-social__field label { font-size: 0.85rem; }
+.contact-social__field input, .contact-social__field textarea { border: 1px solid var(--color-border); padding: 0.7rem 1rem; font: inherit; background: var(--color-bg); color: var(--color-text); }
+.contact-social__form .btn { align-self: flex-start; cursor: pointer; }
+.contact-social__email { margin: 1rem 0 0; }
 .section[data-align="left"] .contact-social__body,
-.section[data-align="left"] .contact-social__list { margin-inline: 0; justify-content: flex-start; }
+.section[data-align="left"] .contact-social__blocks { margin-inline: 0; }
+.section[data-align="left"] .contact-social__block { text-align: left; }
+.section[data-align="left"] .contact-social__list { justify-content: flex-start; }

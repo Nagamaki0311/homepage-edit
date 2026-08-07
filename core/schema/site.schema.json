@@ -15,12 +15,14 @@
             "id": { "type": "string" },
             "name": { "type": "string" },
             "locale": { "type": "string" },
+            "baseUrl": { "type": "string", "description": "サイトの公開ベースURL（例: https://example.netlify.app）。設定するとog:image/og:urlが絶対URL化される。省略時は相対パスのまま。" },
             "meta": {
               "type": "object",
               "properties": {
                 "title": { "type": "string" },
                 "description": { "type": "string" },
-                "ogImage": { "type": "string" }
+                "ogImage": { "type": "string" },
+                "favicon": { "type": "string", "description": "アセットID、または/で始まる固定パス。省略時は/favicon.svgを既定値とする。" }
               }
             }
           }
@@ -86,9 +88,11 @@
               "type": "array",
               "items": {
                 "type": "object",
-                "required": ["pageId", "label"],
+                "required": ["label"],
+                "anyOf": [{ "required": ["pageId"] }, { "required": ["href"] }],
                 "properties": {
                   "pageId": { "type": "string" },
+                  "href": { "type": "string", "description": "T-013の複数ページ管理UIが無くとも、トップページ内アンカー（#section等）や外部/固定パスへ直接リンクするための指定。pageIdより優先される。" },
                   "label": { "type": "string" },
                   "visible": { "type": "boolean" }
                 }
@@ -126,7 +130,20 @@
               "file": { "type": "string" },
               "w": { "type": "number" },
               "h": { "type": "number" },
-              "alt": { "type": "string" }
+              "alt": { "type": "string" },
+              "srcset": {
+                "type": "array",
+                "description": "WebP等の複数解像度バリアント（省略可）。",
+                "items": {
+                  "type": "object",
+                  "required": ["width", "file"],
+                  "properties": {
+                    "width": { "type": "number" },
+                    "height": { "type": "number" },
+                    "file": { "type": "string" }
+                  }
+                }
+              }
             }
           }
         }

@@ -1,6 +1,9 @@
 // editor/media/import.js
 // 画像アップロード → site.assets へ追加し、セクションpropsで参照するassetIdを返す。
-// P0では画像をdata URLとしてそのまま保持する（WebP変換・リサイズはP1: resize-webp.js）。
+// 元画像はdata URLとしてそのまま保持しつつ、resize-webp.jsで生成した複数幅のWebPを
+// asset.srcsetとして併せて保存する（core/render側でsrcset属性として出力される）。
+
+import { generateWebpSrcset } from "./resize-webp.js";
 
 function readAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -32,10 +35,21 @@ export async function readImageAsAsset(store, file) {
   const { w, h } = await readImageSize(dataUrl);
   const assetId = `a${Date.now().toString(36)}`;
 
+  // WebP生成に失敗してもアップロード自体は失敗させない（元画像のdata URLのみで動作する）。
+  const webp = await generateWebpSrcset(file).catch(() => null);
+
   store.setState((prev) => {
     const next = structuredClone(prev);
     next.site.assets = next.site.assets || [];
-    next.site.assets.push({ id: assetId, file: dataUrl, w, h, alt: file.name });
+    const asset = { id: assetId, file: dataUrl, w, h, alt: file.name };
+    if (webp?.srcset?.length) {
+      asset.srcset = webp.srcset.map((entry) => ({
+        width: entry.width,
+        height: entry.height,
+        file: entry.file,
+      }));
+    }
+    next.site.assets.push(asset);
     return next;
   });
 

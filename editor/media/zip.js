@@ -5,7 +5,7 @@
 // 追加ライブラリを持ち込まないことを優先した。将来ファイルサイズが問題になれば
 // ブラウザ標準の CompressionStream('deflate-raw') を使ったDEFLATE対応を検討する。
 
-import { renderSite } from "../../core/render/render-site.js";
+import { buildSiteFiles } from "../publish/build-files.js";
 
 const CRC_TABLE = (() => {
   const table = new Uint32Array(256);
@@ -121,61 +121,21 @@ export function createZip(files) {
   return out;
 }
 
-function dataUrlToBytes(dataUrl) {
-  const base64 = dataUrl.slice(dataUrl.indexOf(",") + 1);
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return bytes;
-}
-
-function extFromMime(dataUrl) {
-  const m = /^data:image\/([a-zA-Z0-9+.-]+);/.exec(dataUrl);
-  if (!m) return "bin";
-  return m[1] === "svg+xml" ? "svg" : m[1];
-}
-
 /**
  * 現在のstate(site + pages)から dist/ 相当のファイル一式を組み立て、ZIPとしてダウンロードする。
- * アップロード画像（data URL）はバイナリファイルに変換し、site.jsonのasset.fileを相対パスに書き換える。
- * 既存ファイル参照のアセットは assetBase 経由でfetchして実バイトを取得する。
+ * ファイル組み立て自体は editor/publish/build-files.js（GitHub直接公開フローと共有）に委譲する。
  * @param {object} state
  * @param {string} assetBase - 既存アセットを取得する際の相対パス前置（editorの現在位置基準）
  */
 export async function exportSiteAsZip(state, assetBase = "") {
-  const site = structuredClone(state.site);
-  const files = [];
-
-  for (let i = 0; i < (site.assets || []).length; i++) {
-    const asset = site.assets[i];
-    if (asset.file.startsWith("data:")) {
-      const ext = extFromMime(asset.file);
-      const filename = `${asset.id || `asset-${i}`}.${ext}`;
-      files.push({ name: `assets/${filename}`, data: dataUrlToBytes(asset.file) });
-      asset.file = filename;
-    } else {
-      const res = await fetch(`${assetBase}${asset.file}`);
-      const buf = new Uint8Array(await res.arrayBuffer());
-      files.push({ name: `assets/${asset.file}`, data: buf });
-    }
-  }
-
-  for (const pageId of site.pages) {
-    const page = state.pages[pageId];
-    const { html, css } = renderSite(site, page, { assetBase: "assets/", cssHref: "style.css" });
-    const filename = page.slug === "/" ? "index.html" : `${page.slug.replace(/^\/+|\/+$/g, "")}.html`;
-    files.push({ name: filename, data: html });
-    files.push({ name: "style.css", data: css });
-    files.push({ name: `sites-data/pages/${pageId}.json`, data: JSON.stringify(page, null, 2) });
-  }
-  files.push({ name: "sites-data/site.json", data: JSON.stringify(site, null, 2) });
+  const files = await buildSiteFiles(state, { assetBase, dataPrefix: "sites-data" });
 
   const zipBytes = createZip(files);
   const blob = new Blob([zipBytes], { type: "application/zip" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${site.site.id || "site"}.zip`;
+  a.download = `${state.site.site.id || "site"}.zip`;
   a.click();
   URL.revokeObjectURL(url);
 }

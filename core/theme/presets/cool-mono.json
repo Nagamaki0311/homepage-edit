@@ -1,0 +1,17 @@
+{
+  "preset": "cool-mono",
+  "tokens": {
+    "color": {
+      "bg": "#ffffff",
+      "surface": "#f2f3f5",
+      "text": "#1a1c1f",
+      "textMuted": "#6b7078",
+      "accent": "#3d5a80",
+      "border": "#dcdfe4"
+    },
+    "font": { "heading": "system", "body": "system", "scale": 1.0 },
+    "space": { "sectionY": "md", "gap": "sm" },
+    "button": { "shape": "square", "fill": "outline" },
+    "animation": { "preset": "fade-up", "duration": 400 }
+  }
+}
